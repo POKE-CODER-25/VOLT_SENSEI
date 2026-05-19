@@ -1,31 +1,136 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { LogOut, Menu, X, Zap } from "lucide-react";
-import { useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { ChevronDown, LogOut, Menu, X, Zap, Cpu, Calculator, Atom } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+
+const senseis = [
+  { label: "Physics Sensei", to: "/learn?subject=physics", icon: Cpu, color: "text-electric" },
+  { label: "Maths Sensei", to: "/learn?subject=maths", icon: Calculator, color: "text-purple-400" },
+  { label: "Chemistry Sensei", to: "/learn?subject=chemistry", icon: Atom, color: "text-emerald-400" },
+];
 
 const navItems = [
   { label: "Home", to: "/" },
-  { label: "Physics Sensei", to: "/learn?subject=physics" },
-  { label: "Maths Sensei", to: "/learn?subject=maths" },
-  { label: "Chemistry Sensei", to: "/learn?subject=chemistry" },
   { label: "Battle Ground", to: "/quiz" },
   { label: "XP Level", to: "/dashboard" },
 ];
 
-const navLinkClass = ({ isActive, search }) => {
-  // Simple check since NavLink might not fully match search params exactly
-  // but react-router-dom handles it or we can just let it style natively
-  return `rounded-2xl px-3 py-2 text-[13px] font-black transition duration-300 ${
-    isActive && !search
+const navLinkClass = ({ isActive }) => {
+  return `rounded-2xl px-4 py-2 text-[13px] font-black transition duration-300 flex items-center gap-2 ${
+    isActive
       ? "bg-electric/15 text-electric shadow-[0_0_22px_rgba(0,245,255,0.22)] ring-1 ring-electric/30"
-      : "text-slate-300 hover:bg-electric/10 hover:text-electric"
+      : "text-slate-300 hover:bg-white/5 hover:text-white"
   }`;
 };
+
+function SenseiDropdown({ isMobile, closeMobileMenu }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const timeoutRef = useRef(null);
+  const location = useLocation();
+
+  const isSenseiActive = location.pathname === "/learn";
+
+  const handleMouseEnter = () => {
+    if (isMobile) return;
+    clearTimeout(timeoutRef.current);
+    setIsOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    if (isMobile) return;
+    timeoutRef.current = setTimeout(() => setIsOpen(false), 200);
+  };
+
+  if (isMobile) {
+    return (
+      <div className="flex flex-col gap-1">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className={`flex w-full items-center justify-between rounded-2xl px-4 py-3 text-[13px] font-black transition ${
+            isSenseiActive ? "text-electric" : "text-slate-300"
+          }`}
+        >
+          Senseis
+          <ChevronDown size={16} className={`transition-transform ${isOpen ? "rotate-180" : ""}`} />
+        </button>
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="flex flex-col gap-1 pl-4 overflow-hidden"
+            >
+              {senseis.map((sensei) => (
+                <Link
+                  key={sensei.label}
+                  to={sensei.to}
+                  onClick={closeMobileMenu}
+                  className="flex items-center gap-3 rounded-xl px-4 py-3 text-[13px] font-bold text-slate-400 hover:text-white"
+                >
+                  <sensei.icon size={16} className={sensei.color} />
+                  {sensei.label}
+                </Link>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+      <button
+        className={`flex items-center gap-1 rounded-2xl px-4 py-2 text-[13px] font-black transition duration-300 ${
+          isSenseiActive
+            ? "bg-electric/15 text-electric shadow-[0_0_22px_rgba(0,245,255,0.22)] ring-1 ring-electric/30"
+            : "text-slate-300 hover:bg-white/5 hover:text-white"
+        }`}
+      >
+        Senseis
+        <ChevronDown size={14} className={`transition-transform ${isOpen ? "rotate-180" : ""}`} />
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="absolute left-0 mt-2 w-56 rounded-[1.5rem] border border-white/10 bg-slate-900/95 p-2 shadow-2xl backdrop-blur-xl"
+          >
+            {senseis.map((sensei) => (
+              <Link
+                key={sensei.label}
+                to={sensei.to}
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-3 rounded-xl px-4 py-3 text-[13px] font-bold text-slate-300 transition hover:bg-white/5 hover:text-white"
+              >
+                <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-white/5`}>
+                  <sensei.icon size={16} className={sensei.color} />
+                </div>
+                {sensei.label}
+              </Link>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const { currentUser, logout } = useAuth();
+  const location = useLocation();
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsOpen(false);
+  }, [location]);
 
   return (
     <motion.header
@@ -39,17 +144,22 @@ function Navbar() {
           <span className="grid h-10 w-10 place-items-center rounded-2xl border border-electric/30 bg-electric/10 text-electric shadow-[0_0_18px_rgba(0,245,255,0.28)]">
             <Zap size={22} fill="currentColor" />
           </span>
-          <span className="text-xl font-black tracking-wide md:text-2xl cursor-default">
+          <span className="text-xl font-black tracking-wide md:text-2xl cursor-default select-none">
             VOLT <span className="glow-text text-electric">SENSEI</span>
           </span>
         </div>
 
         <div className="hidden items-center gap-1 lg:flex">
-          {navItems.map((item) => (
-            <NavLink key={item.label} to={item.to} end={item.to === "/"} className={navLinkClass}>
-              {item.label}
-            </NavLink>
-          ))}
+          <NavLink to="/" end className={navLinkClass}>
+            Home
+          </NavLink>
+          <SenseiDropdown isMobile={false} />
+          <NavLink to="/quiz" className={navLinkClass}>
+            Battle Ground
+          </NavLink>
+          <NavLink to="/dashboard" className={navLinkClass}>
+            XP Level
+          </NavLink>
         </div>
 
         <div className="hidden items-center gap-3 lg:flex">
@@ -100,47 +210,50 @@ function Navbar() {
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden lg:hidden"
           >
-            <div className="premium-surface mx-auto mt-4 grid max-w-[1400px] gap-2 rounded-3xl p-3">
-              {navItems.map((item) => (
-                <NavLink
-                  key={item.label}
-                  to={item.to}
-                  end={item.to === "/"}
-                  className={navLinkClass}
-                  onClick={() => setIsOpen(false)}
-                >
-                  {item.label}
-                </NavLink>
-              ))}
-              {currentUser ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    logout();
-                    setIsOpen(false);
-                  }}
-                  className="rounded-2xl border border-white/10 px-4 py-3 text-center text-sm font-black text-white"
-                >
-                  Logout
-                </button>
-              ) : (
-                <>
-                  <Link
-                    to="/login"
-                    onClick={() => setIsOpen(false)}
-                    className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-300"
+            <div className="premium-surface mx-auto mt-4 flex flex-col gap-1 rounded-3xl p-3">
+              <NavLink to="/" end className={navLinkClass} onClick={() => setIsOpen(false)}>
+                Home
+              </NavLink>
+              <SenseiDropdown isMobile={true} closeMobileMenu={() => setIsOpen(false)} />
+              <NavLink to="/quiz" className={navLinkClass} onClick={() => setIsOpen(false)}>
+                Battle Ground
+              </NavLink>
+              <NavLink to="/dashboard" className={navLinkClass} onClick={() => setIsOpen(false)}>
+                XP Level
+              </NavLink>
+
+              <div className="mt-4 flex flex-col gap-2 border-t border-white/5 pt-4">
+                {currentUser ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      logout();
+                      setIsOpen(false);
+                    }}
+                    className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 py-4 text-sm font-black text-white"
                   >
-                    Login
-                  </Link>
-                  <Link
-                    to="/signup"
-                    onClick={() => setIsOpen(false)}
-                    className="premium-button rounded-2xl bg-gradient-to-br from-primary to-amber-300 px-4 py-3 text-center text-sm font-black text-slate-950"
-                  >
-                    Join Free
-                  </Link>
-                </>
-              )}
+                    <LogOut size={16} />
+                    Logout
+                  </button>
+                ) : (
+                  <>
+                    <Link
+                      to="/login"
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 py-4 text-sm font-black text-white"
+                    >
+                      Login
+                    </Link>
+                    <Link
+                      to="/signup"
+                      onClick={() => setIsOpen(false)}
+                      className="premium-button flex items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-amber-300 py-4 text-sm font-black text-slate-950"
+                    >
+                      Join Free
+                    </Link>
+                  </>
+                )}
+              </div>
             </div>
           </motion.div>
         )}
