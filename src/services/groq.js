@@ -232,7 +232,14 @@ function validateQuizData(data) {
 }
 
 export async function generateQuizWithGroq({ topic, difficulty, questionType, subject = "physics" }, attemptCount = 0) {
+  const subjectInstructions = {
+    physics: "Focus on conceptual physics and complex numericals. Include SI units where applicable.",
+    maths: "Focus on step-by-step rigorous mathematical proofs and calculations. Use clear mathematical notation.",
+    chemistry: "Focus on chemical reactions, molecular structures, mechanisms, and physical chemistry numericals where applicable."
+  };
+
   const prompt = `Generate exactly 5 ${difficulty} ${questionType} quiz questions for class 11-12 JEE level on ${topic} for the subject of ${subject}.
+${subjectInstructions[subject] || ""}
 Return ONLY a raw JSON array of objects.
 CRITICAL: No markdown, no code blocks, no preamble, no explanations outside JSON.
 Each object MUST have: "question", "options" (array of 4), "correctAnswer" (must match an option), "explanation", "difficulty", "topic", "xpReward".`;
@@ -252,6 +259,11 @@ Each object MUST have: "question", "options" (array of 4), "correctAnswer" (must
       throw new Error("AI failed to provide any valid questions.");
     }
 
+    let baseXP = 120;
+    if (subject === "maths") baseXP = 150;
+    else if (subject === "physics") baseXP = 130;
+    else if (subject === "chemistry") baseXP = 110;
+
     return validated.map((question, index) => ({
       id: `${Date.now()}-${index}`,
       question: question.question,
@@ -260,7 +272,7 @@ Each object MUST have: "question", "options" (array of 4), "correctAnswer" (must
       explanation: question.explanation || "No explanation provided.",
       difficulty: question.difficulty || difficulty,
       topic: question.topic || topic,
-      xpReward: Number(question.xpReward || (difficulty.includes("Advanced") ? 200 : difficulty.includes("Hard") ? 160 : 120)),
+      xpReward: Number(question.xpReward || (difficulty.includes("Advanced") ? baseXP * 2 : difficulty.includes("Hard") ? baseXP * 1.5 : baseXP)),
     }));
   } catch (err) {
     if (attemptCount < 1) {

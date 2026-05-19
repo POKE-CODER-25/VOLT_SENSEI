@@ -43,7 +43,7 @@ function getTimeLimit(difficulty) {
 }
 
 function Quiz() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const subjectKey = searchParams.get("subject") || "physics";
   const config = subjectData[subjectKey] || subjectData.physics;
 
@@ -55,6 +55,13 @@ function Quiz() {
   useEffect(() => {
     setTopic(config.topics[0]);
   }, [subjectKey]);
+
+  const handleSubjectChange = (key) => {
+    setSearchParams({ subject: key });
+    setPhase("setup");
+    setError("");
+  };
+
   const [questions, setQuestions] = useState([]);
   const [step, setStep] = useState(0);
   const [selected, setSelected] = useState("");
@@ -145,6 +152,7 @@ function Quiz() {
     setSaving(true);
     try {
       await saveQuizAttempt(currentUser.uid, {
+        subject: subjectKey,
         topic,
         difficulty,
         questionType,
@@ -224,9 +232,9 @@ function Quiz() {
   return (
     <>
       <PageHeader
-        eyebrow="AI quiz arena"
-        title="Generate, battle, analyze, and level up."
-        description="Groq-powered quizzes with timers, XP rewards, streak bonuses, Firestore persistence, and real performance analytics."
+        eyebrow={`${config.title} AI quiz arena`}
+        title={`${config.title} Battle Ground`}
+        description={`Groq-powered ${config.title} quizzes with timers, XP rewards, streak bonuses, Firestore persistence, and real performance analytics.`}
       />
 
       <section className="mx-auto max-w-6xl px-4 pb-20 md:px-8">
@@ -245,6 +253,24 @@ function Quiz() {
               exit={{ opacity: 0, y: -18 }}
               className="premium-surface rounded-3xl p-6 md:p-8"
             >
+              {/* Subject Selection Tabs */}
+              <div className="mb-8 flex flex-wrap gap-2 border-b border-white/10 pb-6">
+                {Object.entries(subjectData).map(([key, data]) => (
+                  <button
+                    key={key}
+                    onClick={() => handleSubjectChange(key)}
+                    className={`flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-black transition ${
+                      subjectKey === key
+                        ? `${data.bg} ${data.theme} ring-1 ring-current/30`
+                        : "bg-white/5 text-slate-400 hover:bg-white/10"
+                    }`}
+                  >
+                    <data.icon size={18} />
+                    {data.title} Battle Ground
+                  </button>
+                ))}
+              </div>
+
               <div className="grid gap-5 lg:grid-cols-3">
                 {[
                   ["Topic", config.topics, topic, setTopic],
