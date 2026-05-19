@@ -214,8 +214,9 @@ function Learn() {
           return [createMessage("ai", `Welcome to ${config.title}. How can I help you today?`)];
         }
         return merged.sort((a, b) => {
-          if (a.createdAt && b.createdAt) return a.createdAt.seconds - b.createdAt.seconds;
-          return 0; 
+          const timeA = a.createdAt?.seconds || (a.timestamp ? 0 : Date.now() / 1000);
+          const timeB = b.createdAt?.seconds || (b.timestamp ? 0 : Date.now() / 1000);
+          return timeA - timeB;
         });
       });
     });
@@ -248,7 +249,14 @@ function Learn() {
     if (eOrText && eOrText.preventDefault) eOrText.preventDefault();
     
     text = text.trim();
-    if (!text || isThinking || !currentSessionId) return;
+    if (!text || isThinking) return;
+
+    let sid = currentSessionId;
+    if (!sid) {
+      if (!currentUser) return;
+      sid = await createChatSession(currentUser.uid, subjectKey);
+      setCurrentSessionId(sid);
+    }
 
     const studentMessage = createMessage("student", text);
     const aiMessage = createMessage("ai", "", { isStreaming: true });
@@ -259,10 +267,11 @@ function Learn() {
 
     try {
       if (currentUser) {
-        await saveChatMessage(currentUser.uid, studentMessage, subjectKey, currentSessionId);
+        await saveChatMessage(currentUser.uid, studentMessage, subjectKey, sid);
       }
 
-      const chatContext = [...messages.filter(m => !m.isStreaming), studentMessage];
+      // Use the latest messages for context
+      const chatContext = [...messages.filter(m => !m.isStreaming && m.role !== 'system'), studentMessage];
       const answer = await streamVoltSensei(chatContext, (partial) => {
         setMessages(curr => curr.map(m => m.id === aiMessage.id ? { ...m, text: partial } : m));
       }, subjectKey);
@@ -270,7 +279,7 @@ function Learn() {
       const finalAiMsg = { ...aiMessage, text: answer, isStreaming: false, timestamp: getCurrentTime() };
       
       if (currentUser) {
-        await saveChatMessage(currentUser.uid, finalAiMsg, subjectKey, currentSessionId);
+        await saveChatMessage(currentUser.uid, finalAiMsg, subjectKey, sid);
       }
       
       setMessages(curr => curr.map(m => m.id === aiMessage.id ? finalAiMsg : m));
@@ -284,7 +293,7 @@ function Learn() {
 
   const filteredSessions = useMemo(() => {
     return sessions.filter(s => s.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                                s.lastMessage.toLowerCase().includes(searchQuery.toLowerCase()));
+                                (s.lastMessage && s.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())));
   }, [sessions, searchQuery]);
 
   const copyToClipboard = async (msg) => {
@@ -300,7 +309,8 @@ function Learn() {
         <div className="p-4 border-b border-white/10">
           <button
             onClick={startNewChat}
-            className={`w-full py-3 px-4 rounded-xl border border-dashed ${config.border} flex items-center gap-2 font-black transition hover:bg-white/5`}
+            disabled={isThinking}
+            className={`w-full py-3 px-4 rounded-xl border border-dashed ${config.border} flex items-center gap-2 font-black transition hover:bg-white/5 disabled:opacity-50`}
           >
             <Plus size={18} /> New Chat
           </button>
@@ -321,10 +331,11 @@ function Learn() {
           {filteredSessions.map((session) => (
             <button
               key={session.id}
-              onClick={() => setCurrentSessionId(session.id)}
+              onClick={() => !isThinking && setCurrentSessionId(session.id)}
+              disabled={isThinking}
               className={`w-full group p-3 rounded-xl flex items-center gap-3 transition ${
                 currentSessionId === session.id ? "bg-white/10 ring-1 ring-white/20" : "hover:bg-white/5"
-              }`}
+              } ${isThinking ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               <div className={`p-2 rounded-lg ${currentSessionId === session.id ? config.bg : "bg-white/5"}`}>
                 <MessageSquare size={16} className={currentSessionId === session.id ? config.theme : "text-slate-400"} />
@@ -335,7 +346,8 @@ function Learn() {
               </div>
               <button
                 onClick={(e) => deleteSession(session.id, e)}
-                className="opacity-0 group-hover:opacity-100 p-1 hover:text-rose-500 transition"
+                disabled={isThinking}
+                className="opacity-0 group-hover:opacity-100 p-1 hover:text-rose-500 transition disabled:hidden"
               >
                 <Trash2 size={14} />
               </button>
@@ -369,7 +381,7 @@ function Learn() {
               key={msg.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className={`flex gap-4 ${msg.role === "student" ? "flex-row-reverse" : ""}`}
+              className={`flex gap-4 ${msg.role === "student" ? "flex-row-reverse" : ""} ${msg.isStreaming && !msg.text ? "hidden" : ""}`}
             >
               <div className={`w-10 h-10 rounded-xl shrink-0 flex items-center justify-center ${
                 msg.role === "student" ? "bg-white/10" : config.bg
@@ -420,15 +432,16 @@ function Learn() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                  placeholder={`Ask ${config.title} anything...`}
-                  className="flex-1 bg-transparent px-6 py-4 outline-none text-sm"
+                  disabled={isThinking}
+                  placeholder={isThinking ? "Volt Sensei is thinking..." : `Ask ${config.title} anything...`}
+                  className="flex-1 bg-transparent px-6 py-4 outline-none text-sm disabled:opacity-50"
                 />
                 <button
                   onClick={sendMessage}
-                  disabled={!input.trim()}
+                  disabled={!input.trim() || isThinking}
                   className={`px-6 flex items-center justify-center transition disabled:opacity-30 ${config.theme}`}
                 >
-                  <Send size={20} />
+                  {isThinking ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
                 </button>
               </div>
             </div>

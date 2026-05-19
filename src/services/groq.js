@@ -47,7 +47,7 @@ function buildGroqMessages(chatHistory, subject = "physics") {
   ];
 }
 
-export async function askVoltSensei(chatHistory, subject = "physics") {
+export async function askVoltSensei(chatHistory, subject = "physics", options = {}) {
   const apiKey = getGroqApiKey();
 
   if (!apiKey || apiKey === "YOUR_KEY") {
@@ -63,8 +63,8 @@ export async function askVoltSensei(chatHistory, subject = "physics") {
     body: JSON.stringify({
       model: GROQ_MODEL,
       messages: buildGroqMessages(chatHistory, subject),
-      temperature: 0.75,
-      max_tokens: 650,
+      temperature: options.temperature ?? 0.75,
+      max_tokens: options.max_tokens ?? 650,
     }),
   });
 
@@ -138,19 +138,7 @@ export async function streamVoltSensei(chatHistory, onChunk, subject = "physics"
   while (true) {
     const { done, value } = await reader.read();
 
-    if (done) {
-      if (pendingText.trim()) {
-        const lines = (pendingText + "\n").split("\n");
-        for (const line of lines) {
-          const token = parseLine(line);
-          if (token) {
-            fullText += token;
-            onChunk(fullText);
-          }
-        }
-      }
-      break;
-    }
+    if (done) break;
 
     pendingText += decoder.decode(value, { stream: true });
     const lines = pendingText.split("\n");
@@ -158,10 +146,19 @@ export async function streamVoltSensei(chatHistory, onChunk, subject = "physics"
 
     for (const line of lines) {
       const token = parseLine(line);
-      if (token) {
+      if (token !== null) {
         fullText += token;
         onChunk(fullText);
       }
+    }
+  }
+
+  // Handle remaining text
+  if (pendingText.trim()) {
+    const token = parseLine(pendingText);
+    if (token !== null) {
+      fullText += token;
+      onChunk(fullText);
     }
   }
 
@@ -189,50 +186,87 @@ function parseLine(line) {
 
 function extractJson(text) {
   try {
-    const cleaned = text.replace(/```json/gi, "").replace(/```/g, "").trim();
+    let cleaned = text.trim();
+    // Remove markdown
+    cleaned = cleaned.replace(/```(?:json)?/gi, "").replace(/```/g, "").trim();
+    
     const start = cleaned.indexOf("[");
-    const end = cleaned.lastIndexOf("]");
+    let end = cleaned.lastIndexOf("]");
 
-    if (start === -1 || end === -1) {
-      throw new Error("AI quiz response did not include valid JSON array.");
+    if (start === -1) {
+      throw new Error("No JSON array start found");
     }
 
-    return JSON.parse(cleaned.slice(start, end + 1));
+    // If no closing bracket, it might be truncated. 
+    // We try to find the last closing brace and close the array ourselves as a last resort.
+    if (end === -1 || end < start) {
+      const lastBrace = cleaned.lastIndexOf("}");
+      if (lastBrace !== -1 && lastBrace > start) {
+        cleaned = cleaned.slice(start, lastBrace + 1) + "]";
+        end = cleaned.lastIndexOf("]");
+      } else {
+        throw new Error("No valid JSON content found");
+      }
+    }
+
+    const jsonStr = cleaned.slice(start, end + 1);
+    return JSON.parse(jsonStr);
   } catch (error) {
     console.error("JSON Extraction Error:", error, "Text:", text);
-    throw new Error("Volt Sensei provided an invalid quiz format. Please try again.");
+    throw new Error("Invalid quiz format received from AI.");
   }
 }
 
-export async function generateQuizWithGroq({ topic, difficulty, questionType, subject = "physics" }) {
+function validateQuizData(data) {
+  if (!Array.isArray(data)) return [];
+  
+  return data.filter(q => {
+    return (
+      q &&
+      typeof q.question === 'string' && q.question.length > 0 &&
+      Array.isArray(q.options) && q.options.length >= 2 &&
+      q.correctAnswer !== undefined && q.correctAnswer !== null &&
+      typeof q.explanation === 'string'
+    );
+  });
+}
+
+export async function generateQuizWithGroq({ topic, difficulty, questionType, subject = "physics" }, attemptCount = 0) {
   const prompt = `Generate exactly 5 ${difficulty} ${questionType} quiz questions for class 11-12 JEE level on ${topic} for the subject of ${subject}.
-Return ONLY a valid JSON array of objects. Do not use markdown blocks like \`\`\`json. Just the raw JSON.
-Each object must have exactly these keys:
-"question": string,
-"options": array of exactly 4 strings (for Numerical, provide 4 close options),
-"correctAnswer": string (must exactly match one of the options),
-"explanation": string (step-by-step),
-"difficulty": string,
-"topic": string,
-"xpReward": number (integer).`;
+Return ONLY a raw JSON array of objects.
+CRITICAL: No markdown, no code blocks, no preamble, no explanations outside JSON.
+Each object MUST have: "question", "options" (array of 4), "correctAnswer" (must match an option), "explanation", "difficulty", "topic", "xpReward".`;
 
-  const answer = await askVoltSensei([
-    {
-      role: "student",
-      text: prompt,
-    },
-  ], subject);
+  try {
+    const answer = await askVoltSensei([
+      {
+        role: "student",
+        text: prompt,
+      },
+    ], subject, { max_tokens: 1500, temperature: 0.6 });
 
-  const parsed = extractJson(answer);
+    let parsed = extractJson(answer);
+    let validated = validateQuizData(parsed);
 
-  return parsed.map((question, index) => ({
-    id: `${Date.now()}-${index}`,
-    question: question.question,
-    options: Array.isArray(question.options) ? question.options.slice(0, 4) : [],
-    correctAnswer: question.correctAnswer,
-    explanation: question.explanation || "No explanation provided.",
-    difficulty: question.difficulty || difficulty,
-    topic: question.topic || topic,
-    xpReward: Number(question.xpReward || (difficulty.includes("Advanced") ? 200 : difficulty.includes("Hard") ? 160 : 120)),
-  }));
+    if (validated.length === 0) {
+      throw new Error("AI failed to provide any valid questions.");
+    }
+
+    return validated.map((question, index) => ({
+      id: `${Date.now()}-${index}`,
+      question: question.question,
+      options: Array.isArray(question.options) ? question.options.slice(0, 4) : [],
+      correctAnswer: String(question.correctAnswer),
+      explanation: question.explanation || "No explanation provided.",
+      difficulty: question.difficulty || difficulty,
+      topic: question.topic || topic,
+      xpReward: Number(question.xpReward || (difficulty.includes("Advanced") ? 200 : difficulty.includes("Hard") ? 160 : 120)),
+    }));
+  } catch (err) {
+    if (attemptCount < 1) {
+      console.warn("Quiz generation failed, retrying once...", err.message);
+      return generateQuizWithGroq({ topic, difficulty, questionType, subject }, attemptCount + 1);
+    }
+    throw new Error(`Volt Sensei failed to generate a valid quiz: ${err.message}`);
+  }
 }

@@ -289,7 +289,11 @@ export function subscribeToChatSessions(uid, subject, callback) {
       snapshot.docs
         .map((item) => ({ id: item.id, ...item.data() }))
         .filter(s => !s.deleted)
-        .sort((a, b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0)),
+        .sort((a, b) => {
+          const timeA = a.updatedAt?.seconds || Date.now() / 1000;
+          const timeB = b.updatedAt?.seconds || Date.now() / 1000;
+          return timeB - timeA;
+        }),
     );
   });
 }
@@ -306,7 +310,11 @@ export function subscribeToSessionMessages(sessionId, callback) {
     callback(
       snapshot.docs
         .map((item) => ({ id: item.id, ...item.data() }))
-        .sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0)),
+        .sort((a, b) => {
+          const timeA = a.createdAt?.seconds || Date.now() / 1000;
+          const timeB = b.createdAt?.seconds || Date.now() / 1000;
+          return timeA - timeB;
+        }),
     );
   });
 }
