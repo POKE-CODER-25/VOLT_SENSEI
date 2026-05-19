@@ -171,6 +171,7 @@ function Learn() {
   // Reset session when subject changes
   useEffect(() => {
     setCurrentSessionId(null);
+    setMessages([createMessage("ai", `Welcome to ${subjectData[subjectKey]?.title || "Sensei"}. How can I help you today?`)]);
   }, [subjectKey]);
 
   // Subscribe to sessions
@@ -203,10 +204,15 @@ function Learn() {
       setMessages([createMessage("ai", `Welcome to ${config.title}. How can I help you today?`)]);
       return;
     }
+
+    // Immediately clear messages from previous session to avoid "ghosting"
+    setMessages([]);
+
     const unsubscribe = subscribeToSessionMessages(currentSessionId, (data) => {
       setMessages(prev => {
         const dataIds = new Set(data.map(m => m.id));
         // Keep local messages that are streaming OR haven't been saved to Firestore yet
+        // ONLY if they belong to the current session (though usually they do)
         const localOnly = prev.filter(m => (m.isStreaming || m.id.includes('-')) && !dataIds.has(m.id));
         
         const merged = [...data, ...localOnly];
@@ -232,6 +238,7 @@ function Learn() {
 
   const startNewChat = async () => {
     if (!currentUser) return;
+    setMessages([]); // Clear locally immediately
     const newId = await createChatSession(currentUser.uid, subjectKey);
     setCurrentSessionId(newId);
   };
