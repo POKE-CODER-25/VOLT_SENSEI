@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera, Float, MeshDistortMaterial, Sphere, Box, Torus, Center, Cylinder } from "@react-three/drei";
-import { Search, Box as BoxIcon, Shapes, Layers, Play, Info, RotateCcw } from "lucide-react";
+import { Search, Box as BoxIcon, Shapes, Layers, Play, Info, RotateCcw, X } from "lucide-react";
 import PageHeader from "../components/common/PageHeader";
 import * as THREE from "three";
 
@@ -442,20 +442,119 @@ function SolarSystemModel() {
 // --- Maths Model Components ---
 
 function CubeModel() {
+  const groupRef = useRef();
+  useFrame((state) => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y = state.clock.getElapsedTime() * 0.2;
+      groupRef.current.rotation.x = state.clock.getElapsedTime() * 0.1;
+    }
+  });
+
+  const corners = useMemo(() => {
+    const pts = [];
+    for (let x of [-1.5, 1.5]) {
+      for (let y of [-1.5, 1.5]) {
+        for (let z of [-1.5, 1.5]) {
+          pts.push([x, y, z]);
+        }
+      }
+    }
+    return pts;
+  }, []);
+
+  const diagPoints = useMemo(() => [
+    new THREE.Vector3(-1.5, -1.5, -1.5),
+    new THREE.Vector3(1.5, 1.5, 1.5)
+  ], []);
+
+  const edgesGeometry = useMemo(() => new THREE.EdgesGeometry(new THREE.BoxGeometry(3, 3, 3)), []);
+
   return (
-    <Box args={[3, 3, 3]}>
-      <meshStandardMaterial color="#f472b6" wireframe />
-      <meshStandardMaterial color="#f472b6" transparent opacity={0.3} />
-    </Box>
+    <group ref={groupRef}>
+      {/* Main transparent cube */}
+      <Box args={[3, 3, 3]}>
+        <meshStandardMaterial color="#f472b6" transparent opacity={0.15} />
+      </Box>
+      {/* Inner wireframe / Face grid */}
+      <Box args={[3, 3, 3, 3, 3, 3]}>
+        <meshBasicMaterial color="#f472b6" wireframe transparent opacity={0.2} />
+      </Box>
+      {/* Thick Edges */}
+      <lineSegments geometry={edgesGeometry}>
+        <lineBasicMaterial color="#ec4899" linewidth={2} />
+      </lineSegments>
+      {/* Vertices */}
+      {corners.map((pos, i) => (
+        <Sphere key={i} args={[0.08]} position={pos}>
+          <meshStandardMaterial color="#fbbf24" emissive="#fbbf24" emissiveIntensity={0.5} />
+        </Sphere>
+      ))}
+      {/* Diagonal Line */}
+      <line>
+        <bufferGeometry attach="geometry" setFromPoints={diagPoints} />
+        <lineBasicMaterial attach="material" color="#fbbf24" />
+      </line>
+    </group>
   );
 }
 
 function SphereModel() {
+  const groupRef = useRef();
+  useFrame((state) => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y = state.clock.getElapsedTime() * 0.2;
+      groupRef.current.rotation.z = Math.sin(state.clock.getElapsedTime() * 0.1) * 0.2;
+    }
+  });
+
+  const radiusPoints = useMemo(() => [
+    new THREE.Vector3(0, 0, 0),
+    new THREE.Vector3(0, 2, 0)
+  ], []);
+
   return (
-    <Sphere args={[2, 32, 32]}>
-      <meshStandardMaterial color="#f472b6" wireframe />
-      <meshStandardMaterial color="#f472b6" transparent opacity={0.3} />
-    </Sphere>
+    <group ref={groupRef}>
+      {/* Transparent Sphere */}
+      <Sphere args={[2, 32, 32]}>
+        <meshStandardMaterial color="#f472b6" transparent opacity={0.15} />
+      </Sphere>
+      {/* Wireframe for grid effect */}
+      <Sphere args={[2, 16, 16]}>
+        <meshBasicMaterial color="#f472b6" wireframe transparent opacity={0.15} />
+      </Sphere>
+      
+      {/* Great Circles (Equator & Meridians) */}
+      <Torus args={[2, 0.015, 32, 100]} rotation={[Math.PI / 2, 0, 0]}>
+        <meshBasicMaterial color="#ec4899" />
+      </Torus>
+      <Torus args={[2, 0.015, 32, 100]}>
+        <meshBasicMaterial color="#ec4899" />
+      </Torus>
+      <Torus args={[2, 0.015, 32, 100]} rotation={[0, Math.PI / 2, 0]}>
+        <meshBasicMaterial color="#ec4899" />
+      </Torus>
+
+      {/* Latitude Rings */}
+      <Torus args={[Math.sqrt(3), 0.01, 32, 100]} position={[0, 1, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <meshBasicMaterial color="#f472b6" transparent opacity={0.6} />
+      </Torus>
+      <Torus args={[Math.sqrt(3), 0.01, 32, 100]} position={[0, -1, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <meshBasicMaterial color="#f472b6" transparent opacity={0.6} />
+      </Torus>
+
+      {/* Radius Line */}
+      <line>
+        <bufferGeometry attach="geometry" setFromPoints={radiusPoints} />
+        <lineBasicMaterial attach="material" color="#fbbf24" />
+      </line>
+      {/* Center and Edge Point */}
+      <Sphere args={[0.08]} position={[0, 0, 0]}>
+        <meshStandardMaterial color="#fbbf24" emissive="#fbbf24" emissiveIntensity={0.5} />
+      </Sphere>
+      <Sphere args={[0.08]} position={[0, 2, 0]}>
+        <meshStandardMaterial color="#fbbf24" emissive="#fbbf24" emissiveIntensity={0.5} />
+      </Sphere>
+    </group>
   );
 }
 
@@ -618,40 +717,250 @@ function FunctionSurfaceModel() {
 
 const modelData = {
   physics: [
-    { id: "p1", name: "Electric Circuit", category: "Electricity", Component: ElectricCircuitModel },
-    { id: "p2", name: "Magnetic Field", category: "Magnetism", Component: MagneticFieldModel },
-    { id: "p3", name: "Pendulum", category: "Oscillations", Component: PendulumModel },
-    { id: "p4", name: "Projectile Motion", category: "Mechanics", Component: ProjectileMotionModel },
-    { id: "p5", name: "Wave Motion", category: "Waves", Component: WaveMotionModel },
-    { id: "p6", name: "AC Generator", category: "Electromagnetism", Component: ACGeneratorModel },
-    { id: "p7", name: "DC Motor", category: "Electromagnetism", Component: DCMotorModel },
-    { id: "p8", name: "Lens Model", category: "Optics", Component: LensModel },
-    { id: "p9", name: "Pulley System", category: "Mechanics", Component: PulleySystemModel },
-    { id: "p10", name: "Solar System", category: "Astrophysics", Component: SolarSystemModel },
+    { 
+      id: "p1", 
+      name: "Electric Circuit", 
+      category: "Electricity", 
+      Component: ElectricCircuitModel,
+      explanation: "This model demonstrates the flow of electric charge (current) through a closed loop. The battery provides the potential difference that drives electrons through the conductive path.",
+      observation: "Observe how the yellow particles (electrons) move at a constant speed along the wire. Notice they originate from the negative terminal and return to the positive terminal."
+    },
+    { 
+      id: "p2", 
+      name: "Magnetic Field", 
+      category: "Magnetism", 
+      Component: MagneticFieldModel,
+      explanation: "Visualizes the invisible lines of magnetic force surrounding a bar magnet. The field is strongest at the poles and weakens with distance.",
+      observation: "Notice the closed loops of the field lines. Observe how they emerge from the North pole (red) and enter the South pole (blue) in a symmetrical pattern."
+    },
+    { 
+      id: "p3", 
+      name: "Pendulum", 
+      category: "Oscillations", 
+      Component: PendulumModel,
+      explanation: "A classic example of Simple Harmonic Motion (SHM). It demonstrates the continuous exchange between potential energy (at the peaks) and kinetic energy (at the center).",
+      observation: "Watch the velocity changes: the bob moves fastest at the equilibrium position (bottom) and stops momentarily at the maximum displacement."
+    },
+    { 
+      id: "p4", 
+      name: "Projectile Motion", 
+      category: "Mechanics", 
+      Component: ProjectileMotionModel,
+      explanation: "Shows an object moving under the influence of gravity alone. The horizontal motion remains constant while vertical motion is accelerated downward.",
+      observation: "Observe the parabolic arc. Notice how the vertical height increases and decreases symmetrically, while the horizontal progress is steady."
+    },
+    { 
+      id: "p5", 
+      name: "Wave Motion", 
+      category: "Waves", 
+      Component: WaveMotionModel,
+      explanation: "Demonstrates a transverse wave where individual particles oscillate perpendicular to the direction of energy propagation.",
+      observation: "Focus on a single sphere. Notice it only moves up and down, but the overall 'wave pattern' appears to travel horizontally across the screen."
+    },
+    { 
+      id: "p6", 
+      name: "AC Generator", 
+      category: "Electromagnetism", 
+      Component: ACGeneratorModel,
+      explanation: "Converts mechanical energy into electrical energy using Faraday's Law of Induction. A rotating coil in a magnetic field induces an alternating current.",
+      observation: "Observe the yellow armature coil rotating between the red and blue magnets. In a real generator, this rotation would create a varying magnetic flux."
+    },
+    { 
+      id: "p7", 
+      name: "DC Motor", 
+      category: "Electromagnetism", 
+      Component: DCMotorModel,
+      explanation: "Uses the magnetic force on a current-carrying wire to produce rotation. It's the inverse of a generator, converting electrical energy to mechanical work.",
+      observation: "Notice the central rotor spinning. The interaction between the current in the coil and the external magnetic field creates a torque that drives the motion."
+    },
+    { 
+      id: "p8", 
+      name: "Lens Model", 
+      category: "Optics", 
+      Component: LensModel,
+      explanation: "Demonstrates the principle of refraction. Light rays bend as they pass through a medium with a different refractive index, converging at a focal point.",
+      observation: "Follow the yellow rays. Notice how they are parallel before entering the lens and converge to a single point (Focus) after passing through."
+    },
+    { 
+      id: "p9", 
+      name: "Pulley System", 
+      category: "Mechanics", 
+      Component: PulleySystemModel,
+      explanation: "A simple machine that changes the direction of a force and can provide mechanical advantage, allowing heavy loads to be lifted with less effort.",
+      observation: "Observe the vertical motion of the red block. Notice how the rope length and pulley rotation work together to translate the input force."
+    },
+    { 
+      id: "p10", 
+      name: "Solar System", 
+      category: "Astrophysics", 
+      Component: SolarSystemModel,
+      explanation: "A scale-simplified model of gravitational orbits. Planets are kept in path by the balance between their inertia and the Sun's gravitational pull.",
+      observation: "Compare the speeds of the Earth and the Moon. Notice how the Moon orbits the Earth while both simultaneously orbit the central Sun."
+    },
   ],
   chemistry: [
-    { id: "c1", name: "Hydrogen Atom", category: "Atomic", Component: () => <AtomStructure nucleusColor="#ef4444" shells={[1]} /> },
-    { id: "c2", name: "Helium Atom", category: "Atomic", Component: () => <AtomStructure nucleusColor="#fbbf24" shells={[2]} /> },
-    { id: "c3", name: "Carbon Atom", category: "Atomic", Component: () => <AtomStructure nucleusColor="#334155" shells={[2, 4]} /> },
-    { id: "c4", name: "Oxygen Atom", category: "Atomic", Component: () => <AtomStructure nucleusColor="#ef4444" shells={[2, 6]} /> },
-    { id: "c5", name: "Water Molecule", category: "Molecular", Component: WaterModel },
-    { id: "c6", name: "CO2 Molecule", category: "Molecular", Component: CO2Model },
-    { id: "c7", name: "Methane Molecule", category: "Molecular", Component: MethaneModel },
-    { id: "c8", name: "Benzene", category: "Organic", Component: BenzeneModel },
-    { id: "c9", name: "Crystal Lattice", category: "Solid State", Component: CrystalLatticeModel },
-    { id: "c10", name: "DNA Structure", category: "Biochemistry", Component: DNAHelixModel },
+    { 
+      id: "c1", 
+      name: "Hydrogen Atom", 
+      category: "Atomic", 
+      Component: () => <AtomStructure nucleusColor="#ef4444" shells={[1]} />,
+      explanation: "The simplest element, consisting of one proton in the nucleus and one electron in the 1s orbital.",
+      observation: "Observe the single electron orbit. In quantum mechanics, this represents a probability density cloud (1s orbital)."
+    },
+    { 
+      id: "c2", 
+      name: "Helium Atom", 
+      category: "Atomic", 
+      Component: () => <AtomStructure nucleusColor="#fbbf24" shells={[2]} />,
+      explanation: "A noble gas with a completely filled first electron shell (1s²). This configuration makes it chemically inert.",
+      observation: "Notice the two electrons sharing the same inner shell. This stability is the reason helium doesn't easily form bonds."
+    },
+    { 
+      id: "c3", 
+      name: "Carbon Atom", 
+      category: "Atomic", 
+      Component: () => <AtomStructure nucleusColor="#334155" shells={[2, 4]} />,
+      explanation: "The backbone of organic chemistry. It has 4 valence electrons, allowing it to form 4 stable covalent bonds.",
+      observation: "Observe the two shells. The outer shell has 4 electrons, which are the 'valence' electrons used in chemical reactions."
+    },
+    { 
+      id: "c4", 
+      name: "Oxygen Atom", 
+      category: "Atomic", 
+      Component: () => <AtomStructure nucleusColor="#ef4444" shells={[2, 6]} />,
+      explanation: "A highly electronegative element with 6 valence electrons. It typically seeks to gain 2 more to complete its octet.",
+      observation: "Notice the 6 electrons in the outer shell. Its high reactivity comes from its 'hunger' to fill those remaining two spots."
+    },
+    { 
+      id: "c5", 
+      name: "Water Molecule", 
+      category: "Molecular", 
+      Component: WaterModel,
+      explanation: "A polar molecule (H₂O). The oxygen atom pulls electrons more strongly than hydrogen, creating a dipole.",
+      observation: "Notice the V-shaped geometry. This 104.5° angle is caused by the repulsive force of oxygen's two lone pairs of electrons."
+    },
+    { 
+      id: "c6", 
+      name: "CO2 Molecule", 
+      category: "Molecular", 
+      Component: CO2Model,
+      explanation: "Carbon Dioxide is a linear molecule. Despite having polar bonds, the overall molecule is non-polar due to its symmetry.",
+      observation: "Observe the double bonds (double cylinders). The atoms are perfectly aligned in a straight line (180° angle)."
+    },
+    { 
+      id: "c7", 
+      name: "Methane Molecule", 
+      category: "Molecular", 
+      Component: MethaneModel,
+      explanation: "The simplest hydrocarbon (CH₄). The carbon atom undergoes sp³ hybridization to form four equivalent bonds.",
+      observation: "Rotate the model to see the tetrahedral shape. Every H-C-H bond angle is exactly 109.5°, maximizing the distance between electrons."
+    },
+    { 
+      id: "c8", 
+      name: "Benzene", 
+      category: "Organic", 
+      Component: BenzeneModel,
+      explanation: "A classic aromatic ring (C₆H₆). The alternating single and double bonds represent resonance and electron delocalization.",
+      observation: "Notice the hexagonal symmetry. The delocalized pi-electrons create a very stable structure compared to open-chain hydrocarbons."
+    },
+    { 
+      id: "c9", 
+      name: "Crystal Lattice", 
+      category: "Solid State", 
+      Component: CrystalLatticeModel,
+      explanation: "Represents the ordered internal arrangement of atoms in a solid. This specific model shows a simple cubic lattice.",
+      observation: "Observe how every atom has a fixed position. The repeating 'unit cell' determines the macroscopic properties of the material."
+    },
+    { 
+      id: "c10", 
+      name: "DNA Structure", 
+      category: "Biochemistry", 
+      Component: DNAHelixModel,
+      explanation: "The double helix structure of Deoxyribonucleic acid. It consists of two strands winding around each other connected by base pairs.",
+      observation: "Follow the two spiraling backbones. The horizontal bonds represent the hydrogen bonding between nitrogenous bases (A-T, G-C)."
+    },
   ],
   maths: [
-    { id: "m1", name: "Cube", category: "Geometry", Component: CubeModel },
-    { id: "m2", name: "Sphere", category: "Geometry", Component: SphereModel },
-    { id: "m3", name: "Cone", category: "Geometry", Component: ConeModel },
-    { id: "m4", name: "Cylinder", category: "Geometry", Component: CylinderModel },
-    { id: "m5", name: "Pyramid", category: "Geometry", Component: PyramidModel },
-    { id: "m6", name: "Coordinate Plane", category: "Algebra", Component: CoordinatePlaneModel },
-    { id: "m7", name: "Vector Visualization", category: "Vectors", Component: VectorVisualizationModel },
-    { id: "m8", name: "Parabola Graph", category: "Algebra", Component: ParabolaGraphModel },
-    { id: "m9", name: "Sine Wave Graph", category: "Trigonometry", Component: SineWaveGraphModel },
-    { id: "m10", name: "3D Function Surface", category: "Calculus", Component: FunctionSurfaceModel },
+    { 
+      id: "m1", 
+      name: "Cube", 
+      category: "Geometry", 
+      Component: CubeModel,
+      explanation: "A regular 3D solid with 6 square faces. It's one of the five Platonic solids, characterized by its perfect symmetry.",
+      observation: "Notice that every edge length is equal and every interior angle is 90 degrees. It represents a 3D extension of a square."
+    },
+    { 
+      id: "m2", 
+      name: "Sphere", 
+      category: "Geometry", 
+      Component: SphereModel,
+      explanation: "The set of all points in 3D space that are at a fixed distance (radius) from a central point.",
+      observation: "Observe the perfect curvature. A sphere has the smallest surface area for a given volume, making it a frequent shape in nature."
+    },
+    { 
+      id: "m3", 
+      name: "Cone", 
+      category: "Geometry", 
+      Component: ConeModel,
+      explanation: "Formed by a set of line segments connecting a common point (apex) to all points on a circular base.",
+      observation: "Rotate to see the circular bottom and the single sharp vertex at the top. Its volume is exactly 1/3 of a cylinder with the same base."
+    },
+    { 
+      id: "m4", 
+      name: "Cylinder", 
+      category: "Geometry", 
+      Component: CylinderModel,
+      explanation: "A solid with two identical circular bases connected by a curved surface. It is generated by rotating a rectangle around one edge.",
+      observation: "Notice the two parallel circular faces. The distance between them is the height, and the curved surface area is 2πrh."
+    },
+    { 
+      id: "m5", 
+      name: "Pyramid", 
+      category: "Geometry", 
+      Component: PyramidModel,
+      explanation: "A polyhedron with a polygonal base and triangular lateral faces that meet at a single apex.",
+      observation: "This specific model has a square base. Notice how the 4 triangular sides converge upward. It's a key shape in geometry and architecture."
+    },
+    { 
+      id: "m6", 
+      name: "Coordinate Plane", 
+      category: "Algebra", 
+      Component: CoordinatePlaneModel,
+      explanation: "A 3D Cartesian coordinate system using three perpendicular axes (X, Y, Z) to define any point in spatial volume.",
+      observation: "Observe the three intersecting grid planes. Each plane (XY, YZ, XZ) divides the 3D space into 8 regions called octants."
+    },
+    { 
+      id: "m7", 
+      name: "Vector Visualization", 
+      category: "Vectors", 
+      Component: VectorVisualizationModel,
+      explanation: "A mathematical object with both magnitude (length) and direction. Used to represent forces, velocities, and fields.",
+      observation: "Notice the arrows. The direction they point and their length are their defining characteristics, independent of their starting position."
+    },
+    { 
+      id: "m8", 
+      name: "Parabola Graph", 
+      category: "Algebra", 
+      Component: ParabolaGraphModel,
+      explanation: "The graph of a quadratic function (y = ax² + bx + c). It's a U-shaped curve that is symmetric about a central vertical axis.",
+      observation: "Look at the lowest point (the vertex). Notice how the curve opens wider as you move away from the center along the X-axis."
+    },
+    { 
+      id: "m9", 
+      name: "Sine Wave Graph", 
+      category: "Trigonometry", 
+      Component: SineWaveGraphModel,
+      explanation: "Represents periodic oscillation. It's the most basic waveform in nature, describing sound, light, and AC electricity.",
+      observation: "Watch the animation. The peak (crest) and valley (trough) heights are constant. This periodic repetition is the core of trig functions."
+    },
+    { 
+      id: "m10", 
+      name: "3D Function Surface", 
+      category: "Calculus", 
+      Component: FunctionSurfaceModel,
+      explanation: "Visualizes a function of two variables z = f(x, y). The height (Z) depends on the spatial position on the XY plane.",
+      observation: "Observe the peaks and valleys on the surface. These represent local maxima and minima, key concepts in multivariable calculus."
+    },
   ],
 };
 
@@ -670,6 +979,20 @@ function Models() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedModel, setSelectedModel] = useState(models[0]);
+  const [showConcept, setShowConcept] = useState(false);
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [simStep, setSimStep] = useState(0);
+
+  const getSimulationSteps = (model) => {
+    if (model.steps) return model.steps;
+    return [
+      { title: "Introduction", content: `Welcome to the simulation for ${model.name}. This interactive model allows you to explore the spatial properties of the concept in 3D.` },
+      { title: "Main Parts", content: `This model consists of distinct parts that interact to demonstrate the principles of ${model.category}.` },
+      { title: "How it works", content: model.explanation || `By observing the animation, you can see how the components behave according to the laws of ${model.category}.` },
+      { title: "JEE Relevance", content: `Understanding ${model.name} is crucial for solving complex JEE problems related to ${model.category}.` },
+      { title: "Key Observation", content: model.observation || `Rotate and zoom to fully understand the 3D structure.` }
+    ];
+  };
 
   const filteredModels = useMemo(() => {
     return models.filter(m => m.name.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -678,7 +1001,11 @@ function Models() {
   // Handle case where subject changed but selectedModel is from old subject
   const currentModel = useMemo(() => {
     const found = models.find(m => m.id === selectedModel.id);
-    return found || models[0];
+    if (!found) {
+      setShowConcept(false);
+      return models[0];
+    }
+    return found;
   }, [models, selectedModel]);
 
   const ActiveModel = currentModel.Component;
@@ -715,7 +1042,10 @@ function Models() {
                 {filteredModels.map((model) => (
                   <button
                     key={model.id}
-                    onClick={() => setSelectedModel(model)}
+                    onClick={() => {
+                      setSelectedModel(model);
+                      setShowConcept(false);
+                    }}
                     className={`group flex flex-col items-center rounded-2xl p-4 text-center transition-all ${
                       currentModel.id === model.id 
                         ? "bg-white/10 ring-1 ring-white/20" 
@@ -780,17 +1110,93 @@ function Models() {
                 >
                   <RotateCcw size={20} />
                 </button>
-                <button className="flex items-center gap-3 rounded-2xl bg-white px-6 py-3 text-sm font-black text-slate-950 transition hover:bg-slate-200 shadow-lg">
+                <button 
+                  onClick={() => { setIsSimulating(true); setSimStep(0); setShowConcept(false); }}
+                  className="flex items-center gap-3 rounded-2xl bg-white px-6 py-3 text-sm font-black text-slate-950 transition hover:bg-slate-200 shadow-lg"
+                >
                   <Play size={18} fill="currentColor" />
                   Simulate
                 </button>
               </div>
 
               <div className="absolute bottom-8 left-8 z-10">
-                 <button className="flex items-center gap-2 rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-300 transition hover:text-white backdrop-blur-xl">
-                   <Info size={14} /> View Concept
+                 <button 
+                  onClick={() => setShowConcept(!showConcept)}
+                  className={`flex items-center gap-2 rounded-2xl border px-4 py-3 text-[11px] font-black uppercase tracking-widest transition backdrop-blur-xl ${
+                    showConcept 
+                      ? "border-white/40 bg-white text-slate-950" 
+                      : "border-white/10 bg-black/40 text-slate-300 hover:text-white"
+                  }`}
+                 >
+                   <Info size={14} /> {showConcept ? "Close Concept" : "View Concept"}
                  </button>
               </div>
+
+              {/* Concept Deep-Dive Panel */}
+              <AnimatePresence>
+                {showConcept && (
+                  <motion.div
+                    initial={{ opacity: 0, x: 100 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 100 }}
+                    className="absolute inset-y-0 right-0 z-20 w-full sm:w-96 border-l border-white/10 bg-slate-950/80 p-8 backdrop-blur-2xl"
+                  >
+                    <div className="flex items-center justify-between mb-8">
+                       <div>
+                         <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${meta.color}`}>JEE {subject}</p>
+                         <h2 className="text-2xl font-black text-white mt-1">{currentModel.name}</h2>
+                       </div>
+                       <button 
+                        onClick={() => setShowConcept(false)}
+                        className="p-2 rounded-full hover:bg-white/10 text-slate-400 transition"
+                       >
+                         <X size={20} />
+                       </button>
+                    </div>
+
+                    <div className="space-y-8 overflow-y-auto max-h-[calc(100vh-250px)] pr-2 custom-scrollbar">
+                       <section>
+                         <h4 className="text-[11px] font-black uppercase text-slate-500 tracking-widest mb-3">How it works</h4>
+                         <p className="text-sm font-medium leading-relaxed text-slate-300">
+                           {currentModel.explanation}
+                         </p>
+                       </section>
+
+                       <section>
+                         <h4 className="text-[11px] font-black uppercase text-slate-500 tracking-widest mb-3">Key Observation</h4>
+                         <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                           <p className="text-xs font-bold leading-relaxed text-slate-400">
+                             {currentModel.observation}
+                           </p>
+                         </div>
+                       </section>
+
+                       <section>
+                         <h4 className="text-[11px] font-black uppercase text-slate-500 tracking-widest mb-3">Model Stats</h4>
+                         <div className="grid grid-cols-2 gap-3">
+                            <div className="rounded-xl bg-white/[0.03] p-3">
+                               <p className="text-[9px] font-black uppercase text-slate-600 mb-1">Precision</p>
+                               <p className="text-xs font-black text-white">1:1 Conceptual</p>
+                            </div>
+                            <div className="rounded-xl bg-white/[0.03] p-3">
+                               <p className="text-[9px] font-black uppercase text-slate-600 mb-1">Complexity</p>
+                               <p className="text-xs font-black text-white">JEE Advanced</p>
+                            </div>
+                         </div>
+                       </section>
+                    </div>
+
+                    <div className="absolute bottom-8 left-8 right-8">
+                       <button 
+                        onClick={() => setShowConcept(false)}
+                        className="w-full py-4 rounded-2xl bg-white text-slate-950 text-xs font-black uppercase tracking-widest hover:bg-slate-200 transition"
+                       >
+                         Understood
+                       </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -811,6 +1217,99 @@ function Models() {
 
         </div>
       </div>
+
+      {/* Fullscreen Simulation Overlay */}
+      <AnimatePresence>
+        {isSimulating && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex flex-col bg-slate-950 text-white"
+          >
+            {/* Header */}
+            <header className="flex h-16 shrink-0 items-center justify-between border-b border-white/10 bg-slate-900/50 px-6 backdrop-blur-md">
+              <div className="flex items-center gap-3">
+                <BoxIcon className={meta.color} size={20} />
+                <h2 className="text-lg font-black">{currentModel.name} - Simulation</h2>
+              </div>
+              <button 
+                onClick={() => setIsSimulating(false)}
+                className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-black transition hover:bg-white/10 hover:text-rose-400"
+              >
+                Exit Simulation
+              </button>
+            </header>
+            
+            {/* Main Content */}
+            <div className="flex flex-1 overflow-hidden">
+              {/* 3D Viewer */}
+              <div className="relative flex-1 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.03)_0%,transparent_70%)]">
+                <Canvas shadows>
+                  <PerspectiveCamera makeDefault position={[0, 0, 8]} fov={45} />
+                  <ambientLight intensity={0.5} />
+                  <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} castShadow />
+                  <pointLight position={[-10, -10, -10]} intensity={0.5} color={meta.theme === 'cyan' ? '#00f5ff' : meta.theme === 'teal' ? '#2dd4bf' : '#f472b6'} />
+                  
+                  <Suspense fallback={null}>
+                    <Float speed={1.5} rotationIntensity={0.5} floatIntensity={0.5}>
+                      <Center>
+                        <ActiveModel />
+                      </Center>
+                    </Float>
+                    <OrbitControls enablePan={false} minDistance={2} maxDistance={20} />
+                  </Suspense>
+                </Canvas>
+              </div>
+
+              {/* Steps Panel */}
+              <div className="w-96 shrink-0 border-l border-white/10 bg-slate-900/50 p-8 backdrop-blur-md flex flex-col overflow-y-auto">
+                <div className="mb-6 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-500">
+                  <span>Step {simStep + 1} of {getSimulationSteps(currentModel).length}</span>
+                </div>
+                
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={simStep}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex-1"
+                  >
+                    <h3 className={`text-2xl font-black mb-4 ${meta.color}`}>
+                      {getSimulationSteps(currentModel)[simStep].title}
+                    </h3>
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                      <p className="text-sm font-medium leading-relaxed text-slate-300">
+                        {getSimulationSteps(currentModel)[simStep].content}
+                      </p>
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
+
+                <div className="mt-8 flex gap-3 shrink-0">
+                  <button
+                    disabled={simStep === 0}
+                    onClick={() => setSimStep(s => Math.max(0, s - 1))}
+                    className="flex-1 rounded-2xl border border-white/10 bg-black/40 py-4 text-xs font-black transition hover:bg-white/5 disabled:opacity-30 disabled:hover:bg-black/40"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    disabled={simStep === getSimulationSteps(currentModel).length - 1}
+                    onClick={() => setSimStep(s => Math.min(getSimulationSteps(currentModel).length - 1, s + 1))}
+                    className="flex-1 rounded-2xl bg-white text-slate-950 py-4 text-xs font-black transition hover:bg-slate-200 disabled:opacity-30"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }
