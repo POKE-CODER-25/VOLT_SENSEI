@@ -237,11 +237,209 @@ const CO2Model = () => (
   />
 );
 
-// --- Subject Specific Physics/Maths placeholders from before ---
+// --- Specific Physics Models ---
 
-function BohrModel() {
-  return <AtomStructure nucleusColor="#f87171" shells={[2, 8, 1]} />;
+function ElectricCircuitModel() {
+  const electronCount = 20;
+  return (
+    <group>
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[2.5, 0.05, 16, 100]} />
+        <meshStandardMaterial color="#475569" />
+      </mesh>
+      <Box args={[0.8, 1, 0.5]} position={[0, 0, 2.5]} rotation={[0, 0, 0]}>
+        <meshStandardMaterial color="#ef4444" />
+      </Box>
+      {Array.from({ length: electronCount }).map((_, i) => (
+        <MovingElectron key={i} radius={2.5} speed={1} offset={(i * Math.PI * 2) / electronCount} />
+      ))}
+    </group>
+  );
 }
+
+function MovingElectron({ radius, speed, offset }) {
+  const ref = useRef();
+  useFrame((state) => {
+    if (!ref.current) return;
+    const t = state.clock.getElapsedTime() * speed + offset;
+    ref.current.position.set(Math.cos(t) * radius, 0, Math.sin(t) * radius);
+  });
+  return <Sphere ref={ref} args={[0.1]}><meshStandardMaterial color="#fbbf24" emissive="#fbbf24" emissiveIntensity={1} /></Sphere>;
+}
+
+function MagneticFieldModel() {
+  return (
+    <group>
+      <Box args={[3, 0.8, 0.8]}>
+        <meshStandardMaterial color="#ef4444" />
+      </Box>
+      <Box args={[1.5, 0.81, 0.81]} position={[0.75, 0, 0]}>
+        <meshStandardMaterial color="#3b82f6" />
+      </Box>
+      {Array.from({ length: 12 }).map((_, i) => {
+        const radius = 1.2 + i * 0.4;
+        return (
+          <group key={i} rotation={[0, 0, (i * Math.PI) / 6]}>
+            <Torus args={[radius, 0.01, 16, 100]} rotation={[Math.PI / 2, 0, 0]}>
+              <meshBasicMaterial color="white" transparent opacity={0.15} />
+            </Torus>
+          </group>
+        );
+      })}
+    </group>
+  );
+}
+
+function PendulumModel() {
+  const groupRef = useRef();
+  useFrame((state) => {
+    if (groupRef.current) groupRef.current.rotation.z = Math.sin(state.clock.getElapsedTime() * 2.5) * 0.7;
+  });
+  return (
+    <group position={[0, 3, 0]}>
+      <Cylinder args={[0.1, 0.1, 1.5]} rotation={[0, 0, Math.PI / 2]}><meshStandardMaterial color="#475569" /></Cylinder>
+      <group ref={groupRef}>
+        <Cylinder args={[0.03, 0.03, 5]} position={[0, -2.5, 0]}><meshStandardMaterial color="#94a3b8" /></Cylinder>
+        <Sphere args={[0.5]} position={[0, -5, 0]}><meshStandardMaterial color="#ef4444" /></Sphere>
+      </group>
+    </group>
+  );
+}
+
+function ProjectileMotionModel() {
+  const ballRef = useRef();
+  useFrame((state) => {
+    const t = (state.clock.getElapsedTime() % 2.5);
+    const x = t * 3 - 3.5;
+    const y = 4 * t - 0.5 * 9.8 * t * t * 0.3 + 0.5;
+    if (ballRef.current) ballRef.current.position.set(x, y, 0);
+  });
+  return (
+    <group>
+      <Box args={[12, 0.1, 6]} position={[0, -1, 0]}><meshStandardMaterial color="#1e293b" /></Box>
+      <Sphere ref={ballRef} args={[0.3]}><meshStandardMaterial color="#00f5ff" emissive="#00f5ff" emissiveIntensity={0.5} /></Sphere>
+    </group>
+  );
+}
+
+function WaveMotionModel() {
+  const spheres = useRef([]);
+  useFrame((state) => {
+    spheres.current.forEach((s, i) => {
+      if (s) s.position.y = Math.sin(state.clock.getElapsedTime() * 4 + i * 0.6) * 1.8;
+    });
+  });
+  return (
+    <group>
+      {Array.from({ length: 24 }).map((_, i) => (
+        <Sphere key={i} ref={el => spheres.current[i] = el} args={[0.2]} position={[i * 0.5 - 5.5, 0, 0]}>
+          <meshStandardMaterial color="#c084fc" emissive="#c084fc" emissiveIntensity={0.3} />
+        </Sphere>
+      ))}
+    </group>
+  );
+}
+
+function ACGeneratorModel() {
+  const coilRef = useRef();
+  useFrame((state) => {
+    if (coilRef.current) coilRef.current.rotation.x = state.clock.getElapsedTime() * 2;
+  });
+  return (
+    <group>
+      <Box args={[1, 3, 3]} position={[-3.5, 0, 0]}><meshStandardMaterial color="#ef4444" /></Box>
+      <Box args={[1, 3, 3]} position={[3.5, 0, 0]}><meshStandardMaterial color="#3b82f6" /></Box>
+      <group ref={coilRef}>
+        <Box args={[0.08, 2, 2.5]}><meshStandardMaterial color="#fbbf24" /></Box>
+        <Cylinder args={[0.1, 0.1, 6]} rotation={[0, 0, Math.PI / 2]}><meshStandardMaterial color="#94a3b8" /></Cylinder>
+      </group>
+    </group>
+  );
+}
+
+function DCMotorModel() {
+  const rotorRef = useRef();
+  useFrame((state) => {
+    if (rotorRef.current) rotorRef.current.rotation.y = state.clock.getElapsedTime() * 3;
+  });
+  return (
+    <group>
+      <Torus args={[3, 0.6, 16, 100, Math.PI]} rotation={[0, Math.PI / 2, 0]}><meshStandardMaterial color="#475569" /></Torus>
+      <group ref={rotorRef}>
+        <Box args={[2, 0.6, 0.6]}><meshStandardMaterial color="#ef4444" /></Box>
+        <Cylinder args={[0.15, 0.15, 4]}><meshStandardMaterial color="#94a3b8" /></Cylinder>
+      </group>
+    </group>
+  );
+}
+
+function LensModel() {
+  return (
+    <group>
+      <mesh rotation={[0, Math.PI / 2, 0]}>
+        <sphereGeometry args={[4, 32, 32, 0, Math.PI * 2, 1.3, 0.5]} />
+        <meshStandardMaterial color="#00f5ff" transparent opacity={0.3} />
+      </mesh>
+      {Array.from({ length: 7 }).map((_, i) => (
+        <PhysicsRay key={i} y={i * 0.4 - 1.2} />
+      ))}
+    </group>
+  );
+}
+
+function PhysicsRay({ y }) {
+  const points = useMemo(() => [
+    new THREE.Vector3(-6, y, 0),
+    new THREE.Vector3(0, y, 0),
+    new THREE.Vector3(6, -y * 0.6, 0)
+  ], [y]);
+  return (
+    <line>
+      <bufferGeometry attach="geometry" setFromPoints={points} />
+      <lineBasicMaterial attach="material" color="#fbbf24" linewidth={2} />
+    </line>
+  );
+}
+
+function PulleySystemModel() {
+  const weightRef = useRef();
+  useFrame((state) => {
+    if (weightRef.current) weightRef.current.position.y = Math.sin(state.clock.getElapsedTime() * 1.5) * 1.2 - 2;
+  });
+  return (
+    <group>
+      <Cylinder args={[1.2, 1.2, 0.5]} rotation={[Math.PI / 2, 0, 0]} position={[0, 2.5, 0]}><meshStandardMaterial color="#475569" /></Cylinder>
+      <group ref={weightRef}>
+        <Cylinder args={[0.03, 0.03, 5]} position={[1.2, 2.5, 0]}><meshStandardMaterial color="#94a3b8" /></Cylinder>
+        <Box args={[1.2, 1.2, 1.2]} position={[1.2, 0, 0]}><meshStandardMaterial color="#ef4444" /></Box>
+      </group>
+      <Cylinder args={[0.03, 0.03, 8]} position={[-1.2, -1.5, 0]}><meshStandardMaterial color="#94a3b8" /></Cylinder>
+    </group>
+  );
+}
+
+function SolarSystemModel() {
+  const earthRef = useRef();
+  const moonRef = useRef();
+  useFrame((state) => {
+    const t = state.clock.getElapsedTime();
+    if (earthRef.current) earthRef.current.position.set(Math.cos(t * 0.4) * 6, 0, Math.sin(t * 0.4) * 6);
+    if (moonRef.current) moonRef.current.position.set(Math.cos(t * 1.8) * 1.8, 0, Math.sin(t * 1.8) * 1.8);
+  });
+  return (
+    <group>
+      <Sphere args={[1.8, 32, 32]}><meshStandardMaterial color="#fbbf24" emissive="#fbbf24" emissiveIntensity={1.2} /></Sphere>
+      <group ref={earthRef}>
+        <Sphere args={[0.7, 32, 32]}><meshStandardMaterial color="#3b82f6" /></Sphere>
+        <group ref={moonRef}>
+          <Sphere args={[0.25, 16, 16]}><meshStandardMaterial color="#94a3b8" /></Sphere>
+        </group>
+      </group>
+    </group>
+  );
+}
+
+// --- Specific Maths placeholders ---
 
 function CalculusModel() {
   return (
@@ -256,9 +454,16 @@ function CalculusModel() {
 
 const modelData = {
   physics: [
-    { id: "p1", name: "Bohr Atomic Model", category: "Modern Physics", Component: BohrModel },
-    { id: "p2", name: "Magnetic Field Lines", category: "Electromagnetism", Component: Sphere },
-    { id: "p3", name: "Projectile Path", category: "Mechanics", Component: Box },
+    { id: "p1", name: "Electric Circuit", category: "Electricity", Component: ElectricCircuitModel },
+    { id: "p2", name: "Magnetic Field", category: "Magnetism", Component: MagneticFieldModel },
+    { id: "p3", name: "Pendulum", category: "Oscillations", Component: PendulumModel },
+    { id: "p4", name: "Projectile Motion", category: "Mechanics", Component: ProjectileMotionModel },
+    { id: "p5", name: "Wave Motion", category: "Waves", Component: WaveMotionModel },
+    { id: "p6", name: "AC Generator", category: "Electromagnetism", Component: ACGeneratorModel },
+    { id: "p7", name: "DC Motor", category: "Electromagnetism", Component: DCMotorModel },
+    { id: "p8", name: "Lens Model", category: "Optics", Component: LensModel },
+    { id: "p9", name: "Pulley System", category: "Mechanics", Component: PulleySystemModel },
+    { id: "p10", name: "Solar System", category: "Astrophysics", Component: SolarSystemModel },
   ],
   chemistry: [
     { id: "c1", name: "Hydrogen Atom", category: "Atomic", Component: () => <AtomStructure nucleusColor="#ef4444" shells={[1]} /> },
