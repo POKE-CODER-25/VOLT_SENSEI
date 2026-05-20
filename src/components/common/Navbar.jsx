@@ -124,7 +124,7 @@ function SenseiDropdown({ isMobile, closeMobileMenu }) {
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const { currentUser, logout } = useAuth();
+  const { currentUser, profile, logout } = useAuth();
   const location = useLocation();
 
   // Close mobile menu on route change
@@ -164,14 +164,19 @@ function Navbar() {
 
         <div className="hidden items-center gap-3 lg:flex">
           {currentUser ? (
-            <button
-              type="button"
-              onClick={logout}
-              className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-black text-white transition hover:border-electric hover:text-electric"
-            >
-              <LogOut size={16} />
-              Logout
-            </button>
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-bold text-slate-400">
+                {profile?.name || currentUser.displayName || "Student"}
+              </span>
+              <button
+                type="button"
+                onClick={logout}
+                className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-black text-white transition hover:border-electric hover:text-electric"
+              >
+                <LogOut size={16} />
+                Logout
+              </button>
+            </div>
           ) : (
             <>
               <Link
@@ -224,17 +229,22 @@ function Navbar() {
 
               <div className="mt-4 flex flex-col gap-2 border-t border-white/5 pt-4">
                 {currentUser ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      logout();
-                      setIsOpen(false);
-                    }}
-                    className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 py-4 text-sm font-black text-white"
-                  >
-                    <LogOut size={16} />
-                    Logout
-                  </button>
+                  <div className="flex flex-col gap-2">
+                    <div className="px-4 py-2 text-center text-sm font-bold text-slate-400">
+                      {profile?.name || currentUser.displayName || "Student"}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        logout();
+                        setIsOpen(false);
+                      }}
+                      className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 py-4 text-sm font-black text-white"
+                    >
+                      <LogOut size={16} />
+                      Logout
+                    </button>
+                  </div>
                 ) : (
                   <>
                     <Link

@@ -6,6 +6,7 @@ import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
 import Learn from "./pages/Learn";
 import Login from "./pages/Login";
+import Models from "./pages/Models";
 import Quiz from "./pages/Quiz";
 import Signup from "./pages/Signup";
 
@@ -17,6 +18,7 @@ function App() {
           <Route element={<AppLayout />}>
             <Route path="/" element={<Home />} />
             <Route path="/learn" element={<Learn />} />
+            <Route path="/models/:subject" element={<Models />} />
             <Route path="/quiz" element={<Quiz />} />
             <Route
               path="/dashboard"

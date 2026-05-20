@@ -1,5 +1,6 @@
 import HeroSection from "../components/home/HeroSection";
 import SubjectCards from "../components/home/SubjectCards";
+import ModelSection from "../components/home/ModelSection";
 import QuickAccess from "../components/home/QuickAccess";
 
 function Home() {
@@ -8,6 +9,7 @@ function Home() {
       <HeroSection />
       <div className="relative z-10 bg-slate-50 dark:bg-slate-950">
         <SubjectCards />
+        <ModelSection />
         <QuickAccess />
       </div>
     </div>

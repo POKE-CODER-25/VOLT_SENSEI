@@ -1,8 +1,12 @@
 import { motion } from "framer-motion";
 import { Sparkles, Zap } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import ButtonLink from "../common/ButtonLink";
 
 function HeroSection() {
+  const { currentUser, profile } = useAuth();
+
   return (
     <section className="relative mx-auto flex min-h-[calc(100vh-96px)] max-w-5xl flex-col items-center justify-center px-4 py-20 text-center md:px-8">
       <div className="absolute inset-x-0 top-0 h-96 bg-[radial-gradient(ellipse_at_top,rgba(0,245,255,0.15),transparent_70%)]" />
@@ -11,10 +15,27 @@ function HeroSection() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative z-10 mb-8 inline-flex items-center gap-2 rounded-full border border-slate-200/50 bg-white/50 px-5 py-2 text-sm font-bold text-slate-800 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200"
+        className="relative z-10 mb-8 inline-flex items-center gap-2 rounded-full border border-slate-200/50 bg-white/50 p-1.5 text-sm font-bold text-slate-800 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200"
       >
-        <Sparkles size={16} className="text-electric" />
-        Intelligent Learning Platform
+        {currentUser ? (
+          <div className="flex items-center gap-2 px-3 py-1">
+            <Sparkles size={16} className="text-electric" />
+            <span>Welcome back, {profile?.name || currentUser.displayName || "Student"}</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 pl-3">
+              <Sparkles size={16} className="text-electric" />
+              <span>Login to start your JEE journey</span>
+            </div>
+            <Link
+              to="/login"
+              className="rounded-full bg-electric px-4 py-1.5 text-xs font-black text-slate-950 transition hover:bg-electric/80"
+            >
+              Login
+            </Link>
+          </div>
+        )}
       </motion.div>
 
       <motion.h1

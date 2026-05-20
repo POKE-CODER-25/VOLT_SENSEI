@@ -160,6 +160,7 @@ function Learn() {
   const [isThinking, setIsThinking] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [copiedId, setCopiedId] = useState("");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const messagesEndRef = useRef(null);
   const currentSessionIdRef = useRef(null);
@@ -172,6 +173,7 @@ function Learn() {
   useEffect(() => {
     setCurrentSessionId(null);
     setMessages([createMessage("ai", `Welcome to ${subjectData[subjectKey]?.title || "Sensei"}. How can I help you today?`)]);
+    setIsSidebarOpen(false);
   }, [subjectKey]);
 
   // Subscribe to sessions
@@ -311,15 +313,38 @@ function Learn() {
 
   return (
     <div className={`flex h-full bg-slate-950 text-white overflow-hidden ${isFullscreen ? "fixed inset-0 z-[100]" : "relative"}`}>
+      {/* Sidebar Overlay for Mobile */}
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsSidebarOpen(false)}
+            className="absolute inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+          />
+        )}
+      </AnimatePresence>
+
       {/* Sidebar */}
-      <aside className="w-80 border-r border-white/10 flex flex-col bg-slate-900/50 backdrop-blur-xl shrink-0">
-        <div className="p-4 border-b border-white/10">
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-72 border-r border-white/10 flex flex-col bg-slate-900/90 backdrop-blur-xl shrink-0 transition-transform duration-300 lg:relative lg:translate-x-0 lg:z-0 lg:w-80 lg:bg-slate-900/50 ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="p-4 border-b border-white/10 flex items-center justify-between">
           <button
             onClick={startNewChat}
             disabled={isThinking}
-            className={`w-full py-3 px-4 rounded-xl border border-dashed ${config.border} flex items-center gap-2 font-black transition hover:bg-white/5 disabled:opacity-50`}
+            className={`flex-1 py-3 px-4 rounded-xl border border-dashed ${config.border} flex items-center gap-2 font-black transition hover:bg-white/5 disabled:opacity-50`}
           >
             <Plus size={18} /> New Chat
+          </button>
+          <button
+            onClick={() => setIsSidebarOpen(false)}
+            className="p-2 ml-2 text-slate-400 hover:text-white lg:hidden"
+          >
+            <X size={20} />
           </button>
         </div>
 
@@ -338,7 +363,12 @@ function Learn() {
           {filteredSessions.map((session) => (
             <button
               key={session.id}
-              onClick={() => !isThinking && setCurrentSessionId(session.id)}
+              onClick={() => {
+                if (!isThinking) {
+                  setCurrentSessionId(session.id);
+                  setIsSidebarOpen(false);
+                }
+              }}
               disabled={isThinking}
               className={`w-full group p-3 rounded-xl flex items-center gap-3 transition ${
                 currentSessionId === session.id ? "bg-white/10 ring-1 ring-white/20" : "hover:bg-white/5"
@@ -368,10 +398,16 @@ function Learn() {
         <config.Visuals />
         
         {/* Top Bar */}
-        <header className="h-16 border-b border-white/10 flex items-center justify-between px-6 bg-slate-950/50 backdrop-blur-md z-10 shrink-0">
-          <div className="flex items-center gap-3">
-            <config.icon className={config.theme} size={24} />
-            <h1 className="text-xl font-black">{config.title}</h1>
+        <header className="h-16 border-b border-white/10 flex items-center justify-between px-4 md:px-6 bg-slate-950/50 backdrop-blur-md z-10 shrink-0">
+          <div className="flex items-center gap-2 md:gap-3">
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="p-2 -ml-2 rounded-lg hover:bg-white/5 transition text-slate-400 lg:hidden"
+            >
+              <MessageSquare size={20} />
+            </button>
+            <config.icon className={config.theme} size={20} />
+            <h1 className="text-lg md:text-xl font-black truncate">{config.title}</h1>
           </div>
           <button
             onClick={() => setIsFullscreen(!isFullscreen)}
