@@ -223,6 +223,20 @@ const NaClModel = () => (
   </group>
 );
 
+const CO2Model = () => (
+  <Molecule 
+    atoms={[
+      { pos: [0, 0, 0], color: "#334155", size: 0.5 }, // C
+      { pos: [1.2, 0, 0], color: "#ef4444", size: 0.5 }, // O
+      { pos: [-1.2, 0, 0], color: "#ef4444", size: 0.5 }, // O
+    ]}
+    bonds={[
+      { start: [0, 0, 0], end: [1.2, 0, 0], double: true },
+      { start: [0, 0, 0], end: [-1.2, 0, 0], double: true },
+    ]}
+  />
+);
+
 // --- Subject Specific Physics/Maths placeholders from before ---
 
 function BohrModel() {
@@ -248,15 +262,15 @@ const modelData = {
   ],
   chemistry: [
     { id: "c1", name: "Hydrogen Atom", category: "Atomic", Component: () => <AtomStructure nucleusColor="#ef4444" shells={[1]} /> },
-    { id: "c2", name: "Carbon Atom", category: "Atomic", Component: () => <AtomStructure nucleusColor="#334155" shells={[2, 4]} /> },
-    { id: "c3", name: "Water Molecule", category: "Molecular", Component: WaterModel },
-    { id: "c4", name: "Oxygen Molecule", category: "Molecular", Component: OxygenModel },
-    { id: "c5", name: "Methane Molecule", category: "Molecular", Component: MethaneModel },
-    { id: "c6", name: "Benzene Ring", category: "Organic", Component: BenzeneModel },
-    { id: "c7", name: "DNA Double Helix", category: "Biochemistry", Component: DNAHelixModel },
-    { id: "c8", name: "Crystal Lattice", category: "Solid State", Component: CrystalLatticeModel },
-    { id: "c9", name: "Sodium Chloride (NaCl)", category: "Solid State", Component: NaClModel },
-    { id: "c10", name: "Periodic Atom Structure", category: "Atomic", Component: () => <AtomStructure nucleusColor="#f59e0b" shells={[2, 8, 18, 1]} /> },
+    { id: "c2", name: "Helium Atom", category: "Atomic", Component: () => <AtomStructure nucleusColor="#fbbf24" shells={[2]} /> },
+    { id: "c3", name: "Carbon Atom", category: "Atomic", Component: () => <AtomStructure nucleusColor="#334155" shells={[2, 4]} /> },
+    { id: "c4", name: "Oxygen Atom", category: "Atomic", Component: () => <AtomStructure nucleusColor="#ef4444" shells={[2, 6]} /> },
+    { id: "c5", name: "Water Molecule", category: "Molecular", Component: WaterModel },
+    { id: "c6", name: "CO2 Molecule", category: "Molecular", Component: CO2Model },
+    { id: "c7", name: "Methane Molecule", category: "Molecular", Component: MethaneModel },
+    { id: "c8", name: "Benzene", category: "Organic", Component: BenzeneModel },
+    { id: "c9", name: "Crystal Lattice", category: "Solid State", Component: CrystalLatticeModel },
+    { id: "c10", name: "DNA Structure", category: "Biochemistry", Component: DNAHelixModel },
   ],
   maths: [
     { id: "m1", name: "Dynamic Surface", category: "Calculus", Component: CalculusModel },
