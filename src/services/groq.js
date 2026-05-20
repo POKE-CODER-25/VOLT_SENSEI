@@ -232,17 +232,26 @@ function validateQuizData(data) {
 }
 
 export async function generateQuizWithGroq({ topic, difficulty, questionType, subject = "physics" }, attemptCount = 0) {
+  const difficultyPrompts = {
+    Beginner: "Focus on simple concept checks and direct formula applications. Questions should be straightforward.",
+    Medium: "Include moderate calculations and require combining a basic concept with a formula.",
+    Advanced: "Focus on multi-step reasoning and deeper conceptual understanding. Questions should require more than one major step to solve.",
+    "JEE Main": "Genuinely match JEE Main level. Focus on NCERT-based applications, time-pressure MCQs, and standard JEE Main problem patterns. No simple or school-level questions.",
+    "JEE Advanced": "Genuinely match JEE Advanced level. Questions must be hard, involving multiple concepts (multi-concept), multiple logical steps, and tricky reasoning. Use professional academic language."
+  };
+
   const subjectInstructions = {
     physics: "Focus on conceptual physics and complex numericals. Include SI units where applicable.",
-    maths: "Focus on step-by-step rigorous mathematical proofs and calculations. Use clear mathematical notation.",
+    maths: "Focus on rigorous calculations and logical derivations. Use clear mathematical notation.",
     chemistry: "Focus on chemical reactions, molecular structures, mechanisms, and physical chemistry numericals where applicable."
   };
 
-  const prompt = `Generate exactly 5 ${difficulty} ${questionType} quiz questions for class 11-12 JEE level on ${topic} for the subject of ${subject}.
+  const prompt = `Generate exactly 10 ${difficulty} ${questionType} quiz questions for class 11-12 JEE level on ${topic} for the subject of ${subject}.
+${difficultyPrompts[difficulty] || ""}
 ${subjectInstructions[subject] || ""}
 Return ONLY a raw JSON array of objects.
 CRITICAL: No markdown, no code blocks, no preamble, no explanations outside JSON.
-Each object MUST have: "question", "options" (array of 4), "correctAnswer" (must match an option), "explanation", "difficulty", "topic", "xpReward".`;
+Each object MUST have: "question", "options" (array of 4), "correctAnswer" (must match an option exactly), "explanation", "difficulty", "topic", "xpReward".`;
 
   try {
     const answer = await askVoltSensei([
@@ -250,7 +259,7 @@ Each object MUST have: "question", "options" (array of 4), "correctAnswer" (must
         role: "student",
         text: prompt,
       },
-    ], subject, { max_tokens: 1500, temperature: 0.6 });
+    ], subject, { max_tokens: 3000, temperature: 0.65 });
 
     let parsed = extractJson(answer);
     let validated = validateQuizData(parsed);
@@ -264,16 +273,24 @@ Each object MUST have: "question", "options" (array of 4), "correctAnswer" (must
     else if (subject === "physics") baseXP = 130;
     else if (subject === "chemistry") baseXP = 110;
 
-    return validated.map((question, index) => ({
-      id: `${Date.now()}-${index}`,
-      question: question.question,
-      options: Array.isArray(question.options) ? question.options.slice(0, 4) : [],
-      correctAnswer: String(question.correctAnswer),
-      explanation: question.explanation || "No explanation provided.",
-      difficulty: question.difficulty || difficulty,
-      topic: question.topic || topic,
-      xpReward: Number(question.xpReward || (difficulty.includes("Advanced") ? baseXP * 2 : difficulty.includes("Hard") ? baseXP * 1.5 : baseXP)),
-    }));
+    return validated.map((question, index) => {
+      let reward = 10;
+      if (difficulty === "JEE Advanced") reward = 75;
+      else if (difficulty === "JEE Main") reward = 50;
+      else if (difficulty === "Advanced") reward = 35;
+      else if (difficulty === "Medium") reward = 20;
+
+      return {
+        id: `${Date.now()}-${index}`,
+        question: question.question,
+        options: Array.isArray(question.options) ? question.options.slice(0, 4) : [],
+        correctAnswer: String(question.correctAnswer),
+        explanation: question.explanation || "No explanation provided.",
+        difficulty: question.difficulty || difficulty,
+        topic: question.topic || topic,
+        xpReward: reward,
+      };
+    });
   } catch (err) {
     if (attemptCount < 1) {
       console.warn("Quiz generation failed, retrying once...", err.message);

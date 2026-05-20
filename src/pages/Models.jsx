@@ -1,15 +1,41 @@
-import { useState, useMemo, Suspense, useRef } from "react";
+import { useState, useMemo, Suspense, useRef, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera, Float, MeshDistortMaterial, Sphere, Box, Torus, Center, Cylinder } from "@react-three/drei";
-import { Search, Box as BoxIcon, Shapes, Layers, Play, Info, RotateCcw, X } from "lucide-react";
+import { Search, Box as BoxIcon, Shapes, Layers, Play, Info, RotateCcw, X, Sparkles } from "lucide-react";
 import PageHeader from "../components/common/PageHeader";
 import * as THREE from "three";
 
+// --- Components for Highlighting ---
+
+function HighlightWrapper({ active, children, color = "#fbbf24" }) {
+  const ref = useRef();
+  useFrame((state) => {
+    if (!ref.current) return;
+    if (active) {
+      const scale = 1 + Math.sin(state.clock.getElapsedTime() * 10) * 0.05;
+      ref.current.scale.set(scale, scale, scale);
+    } else {
+      ref.current.scale.set(1, 1, 1);
+    }
+  });
+
+  return (
+    <group ref={ref}>
+      {children}
+      {active && (
+        <Sphere args={[0.05]} position={[0, 0, 0]}>
+          <meshBasicMaterial color={color} transparent opacity={0} />
+        </Sphere>
+      )}
+    </group>
+  );
+}
+
 // --- 3D Model Components ---
 
-function Electron({ radius, speed, offset }) {
+function Electron({ radius, speed, offset, highlighted }) {
   const meshRef = useRef();
   
   useFrame((state) => {
@@ -22,26 +48,45 @@ function Electron({ radius, speed, offset }) {
   return (
     <mesh ref={meshRef}>
       <sphereGeometry args={[0.08, 16, 16]} />
-      <meshStandardMaterial color="#00f5ff" emissive="#00f5ff" emissiveIntensity={2} />
+      <meshStandardMaterial 
+        color="#00f5ff" 
+        emissive="#00f5ff" 
+        emissiveIntensity={highlighted ? 5 : 2} 
+      />
     </mesh>
   );
 }
 
-function AtomStructure({ nucleusColor, shells }) {
+function AtomStructure({ nucleusColor, shells, highlight }) {
+  const isNucleusHighlighted = highlight === "primary";
+  const areOrbitsHighlighted = highlight === "secondary" || highlight === "detail";
+
   return (
     <group>
-      <Sphere args={[0.4, 32, 32]}>
-        <meshStandardMaterial color={nucleusColor} emissive={nucleusColor} emissiveIntensity={0.5} />
-      </Sphere>
+      <HighlightWrapper active={isNucleusHighlighted}>
+        <Sphere args={[0.4, 32, 32]}>
+          <meshStandardMaterial 
+            color={nucleusColor} 
+            emissive={nucleusColor} 
+            emissiveIntensity={isNucleusHighlighted ? 3 : 0.5} 
+          />
+        </Sphere>
+      </HighlightWrapper>
       {shells.map((count, i) => {
         const radius = 1.2 + i * 0.8;
         return (
           <group key={i} rotation={[Math.random() * Math.PI, Math.random() * Math.PI, 0]}>
             <Torus args={[radius, 0.01, 16, 100]} rotation={[Math.PI / 2, 0, 0]}>
-              <meshBasicMaterial color="white" transparent opacity={0.1} />
+              <meshBasicMaterial color="white" transparent opacity={areOrbitsHighlighted ? 0.4 : 0.1} />
             </Torus>
             {Array.from({ length: count }).map((_, j) => (
-              <Electron key={j} radius={radius} speed={1 - i * 0.2} offset={(j * Math.PI * 2) / count} />
+              <Electron 
+                key={j} 
+                radius={radius} 
+                speed={1 - i * 0.2} 
+                offset={(j * Math.PI * 2) / count} 
+                highlighted={areOrbitsHighlighted}
+              />
             ))}
           </group>
         );
@@ -50,7 +95,7 @@ function AtomStructure({ nucleusColor, shells }) {
   );
 }
 
-function Bond({ start, end, double = false }) {
+function Bond({ start, end, double = false, highlighted }) {
   const startVec = new THREE.Vector3(...start);
   const endVec = new THREE.Vector3(...end);
   const dir = new THREE.Vector3().subVectors(endVec, startVec);
@@ -59,35 +104,44 @@ function Bond({ start, end, double = false }) {
   
   return (
     <group position={mid} quaternion={new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize())}>
-      {double ? (
-        <>
-          <Cylinder args={[0.04, 0.04, len]} position={[0.1, 0, 0]}>
-            <meshStandardMaterial color="#64748b" />
+      <HighlightWrapper active={highlighted}>
+        {double ? (
+          <>
+            <Cylinder args={[0.04, 0.04, len]} position={[0.1, 0, 0]}>
+              <meshStandardMaterial color={highlighted ? "#fbbf24" : "#64748b"} emissive={highlighted ? "#fbbf24" : "black"} emissiveIntensity={highlighted ? 2 : 0} />
+            </Cylinder>
+            <Cylinder args={[0.04, 0.04, len]} position={[-0.1, 0, 0]}>
+              <meshStandardMaterial color={highlighted ? "#fbbf24" : "#64748b"} emissive={highlighted ? "#fbbf24" : "black"} emissiveIntensity={highlighted ? 2 : 0} />
+            </Cylinder>
+          </>
+        ) : (
+          <Cylinder args={[0.05, 0.05, len]}>
+            <meshStandardMaterial color={highlighted ? "#fbbf24" : "#64748b"} emissive={highlighted ? "#fbbf24" : "black"} emissiveIntensity={highlighted ? 2 : 0} />
           </Cylinder>
-          <Cylinder args={[0.04, 0.04, len]} position={[-0.1, 0, 0]}>
-            <meshStandardMaterial color="#64748b" />
-          </Cylinder>
-        </>
-      ) : (
-        <Cylinder args={[0.05, 0.05, len]}>
-          <meshStandardMaterial color="#64748b" />
-        </Cylinder>
-      )}
+        )}
+      </HighlightWrapper>
     </group>
   );
 }
 
-function Molecule({ atoms, bonds }) {
+function Molecule({ atoms, bonds, highlight }) {
+  const areAtomsHighlighted = highlight === "primary";
+  const areBondsHighlighted = highlight === "secondary" || highlight === "detail";
+
   return (
     <group>
       {atoms.map((atom, i) => (
         <mesh key={i} position={atom.pos}>
           <sphereGeometry args={[atom.size || 0.4, 32, 32]} />
-          <meshStandardMaterial color={atom.color} />
+          <meshStandardMaterial 
+            color={atom.color} 
+            emissive={atom.color} 
+            emissiveIntensity={areAtomsHighlighted ? 2 : 0} 
+          />
         </mesh>
       ))}
       {bonds.map((bond, i) => (
-        <Bond key={i} start={bond.start} end={bond.end} double={bond.double} />
+        <Bond key={i} start={bond.start} end={bond.end} double={bond.double} highlighted={areBondsHighlighted} />
       ))}
     </group>
   );
@@ -95,8 +149,9 @@ function Molecule({ atoms, bonds }) {
 
 // --- Specific Chemistry Models ---
 
-const WaterModel = () => (
+const WaterModel = (props) => (
   <Molecule 
+    {...props}
     atoms={[
       { pos: [0, 0, 0], color: "#ef4444", size: 0.5 }, // O
       { pos: [0.7, 0.6, 0], color: "#ffffff", size: 0.3 }, // H
@@ -109,8 +164,9 @@ const WaterModel = () => (
   />
 );
 
-const OxygenModel = () => (
+const OxygenModel = (props) => (
   <Molecule 
+    {...props}
     atoms={[
       { pos: [-0.8, 0, 0], color: "#ef4444", size: 0.5 },
       { pos: [0.8, 0, 0], color: "#ef4444", size: 0.5 },
@@ -119,8 +175,9 @@ const OxygenModel = () => (
   />
 );
 
-const MethaneModel = () => (
+const MethaneModel = (props) => (
   <Molecule 
+    {...props}
     atoms={[
       { pos: [0, 0, 0], color: "#334155", size: 0.5 }, // C
       { pos: [1, 1, 1], color: "#ffffff", size: 0.3 },
@@ -137,7 +194,7 @@ const MethaneModel = () => (
   />
 );
 
-const BenzeneModel = () => {
+const BenzeneModel = (props) => {
   const points = Array.from({ length: 6 }).map((_, i) => [
     Math.cos((i * Math.PI * 2) / 6) * 1.5,
     Math.sin((i * Math.PI * 2) / 6) * 1.5,
@@ -151,6 +208,7 @@ const BenzeneModel = () => {
   
   return (
     <Molecule 
+      {...props}
       atoms={[
         ...points.map(p => ({ pos: p, color: "#334155", size: 0.4 })),
         ...hPoints.map(p => ({ pos: p, color: "#ffffff", size: 0.2 })),
@@ -167,7 +225,7 @@ const BenzeneModel = () => {
   );
 };
 
-const DNAHelixModel = () => {
+const DNAHelixModel = ({ highlight }) => {
   const points = Array.from({ length: 20 }).map((_, i) => {
     const angle = i * 0.8;
     const y = i * 0.4 - 4;
@@ -177,27 +235,36 @@ const DNAHelixModel = () => {
     };
   });
 
+  const isBackboneHighlighted = highlight === "primary";
+  const areBasesHighlighted = highlight === "secondary" || highlight === "detail";
+
   return (
     <group>
       {points.map((p, i) => (
         <group key={i}>
-          <mesh position={p.p1}><sphereGeometry args={[0.2, 16, 16]} /><meshStandardMaterial color="#3b82f6" /></mesh>
-          <mesh position={p.p2}><sphereGeometry args={[0.2, 16, 16]} /><meshStandardMaterial color="#ef4444" /></mesh>
-          {i % 2 === 0 && <Bond start={p.p1} end={p.p2} />}
+          <mesh position={p.p1}>
+            <sphereGeometry args={[0.2, 16, 16]} />
+            <meshStandardMaterial color="#3b82f6" emissive="#3b82f6" emissiveIntensity={isBackboneHighlighted ? 2 : 0} />
+          </mesh>
+          <mesh position={p.p2}>
+            <sphereGeometry args={[0.2, 16, 16]} />
+            <meshStandardMaterial color="#ef4444" emissive="#ef4444" emissiveIntensity={isBackboneHighlighted ? 2 : 0} />
+          </mesh>
+          {i % 2 === 0 && <Bond start={p.p1} end={p.p2} highlighted={areBasesHighlighted} />}
         </group>
       ))}
     </group>
   );
 };
 
-const CrystalLatticeModel = () => (
+const CrystalLatticeModel = ({ highlight }) => (
   <group>
     {Array.from({ length: 3 }).map((_, x) => 
       Array.from({ length: 3 }).map((_, y) => 
         Array.from({ length: 3 }).map((_, z) => (
           <mesh key={`${x}${y}${z}`} position={[x - 1, y - 1, z - 1]}>
             <sphereGeometry args={[0.15, 16, 16]} />
-            <meshStandardMaterial color="#94a3b8" />
+            <meshStandardMaterial color="#94a3b8" emissive="#fbbf24" emissiveIntensity={highlight !== "none" ? 1 : 0} />
           </mesh>
         ))
       )
@@ -205,16 +272,17 @@ const CrystalLatticeModel = () => (
   </group>
 );
 
-const NaClModel = () => (
+const NaClModel = ({ highlight }) => (
   <group>
     {Array.from({ length: 3 }).map((_, x) => 
       Array.from({ length: 3 }).map((_, y) => 
         Array.from({ length: 3 }).map((_, z) => {
           const isNa = (x + y + z) % 2 === 0;
+          const isHighlighted = (isNa && highlight === "primary") || (!isNa && highlight === "secondary");
           return (
             <mesh key={`${x}${y}${z}`} position={[(x - 1) * 1.2, (y - 1) * 1.2, (z - 1) * 1.2]}>
               <sphereGeometry args={[isNa ? 0.2 : 0.35, 32, 32]} />
-              <meshStandardMaterial color={isNa ? "#818cf8" : "#4ade80"} />
+              <meshStandardMaterial color={isNa ? "#818cf8" : "#4ade80"} emissive={isNa ? "#818cf8" : "#4ade80"} emissiveIntensity={isHighlighted ? 2 : 0} />
             </mesh>
           );
         })
@@ -223,8 +291,9 @@ const NaClModel = () => (
   </group>
 );
 
-const CO2Model = () => (
+const CO2Model = (props) => (
   <Molecule 
+    {...props}
     atoms={[
       { pos: [0, 0, 0], color: "#334155", size: 0.5 }, // C
       { pos: [1.2, 0, 0], color: "#ef4444", size: 0.5 }, // O
@@ -239,49 +308,67 @@ const CO2Model = () => (
 
 // --- Specific Physics Models ---
 
-function ElectricCircuitModel() {
+function ElectricCircuitModel({ highlight }) {
+  const isSourceHighlighted = highlight === "primary";
+  const isWireHighlighted = highlight === "secondary" || highlight === "detail";
   const electronCount = 20;
+
   return (
     <group>
       <mesh rotation={[Math.PI / 2, 0, 0]}>
         <torusGeometry args={[2.5, 0.05, 16, 100]} />
-        <meshStandardMaterial color="#475569" />
+        <meshStandardMaterial color={isWireHighlighted ? "#fbbf24" : "#475569"} emissive={isWireHighlighted ? "#fbbf24" : "black"} emissiveIntensity={isWireHighlighted ? 1 : 0} />
       </mesh>
-      <Box args={[0.8, 1, 0.5]} position={[0, 0, 2.5]} rotation={[0, 0, 0]}>
-        <meshStandardMaterial color="#ef4444" />
-      </Box>
+      <HighlightWrapper active={isSourceHighlighted}>
+        <Box args={[0.8, 1, 0.5]} position={[0, 0, 2.5]}>
+          <meshStandardMaterial color="#ef4444" emissive="#ef4444" emissiveIntensity={isSourceHighlighted ? 2 : 0} />
+        </Box>
+      </HighlightWrapper>
       {Array.from({ length: electronCount }).map((_, i) => (
-        <MovingElectron key={i} radius={2.5} speed={1} offset={(i * Math.PI * 2) / electronCount} />
+        <MovingElectron key={i} radius={2.5} speed={1} offset={(i * Math.PI * 2) / electronCount} highlighted={isWireHighlighted} />
       ))}
     </group>
   );
 }
 
-function MovingElectron({ radius, speed, offset }) {
+function MovingElectron({ radius, speed, offset, highlighted }) {
   const ref = useRef();
   useFrame((state) => {
     if (!ref.current) return;
     const t = state.clock.getElapsedTime() * speed + offset;
     ref.current.position.set(Math.cos(t) * radius, 0, Math.sin(t) * radius);
   });
-  return <Sphere ref={ref} args={[0.1]}><meshStandardMaterial color="#fbbf24" emissive="#fbbf24" emissiveIntensity={1} /></Sphere>;
+  return (
+    <Sphere ref={ref} args={[0.1]}>
+      <meshStandardMaterial 
+        color="#fbbf24" 
+        emissive="#fbbf24" 
+        emissiveIntensity={highlighted ? 5 : 1} 
+      />
+    </Sphere>
+  );
 }
 
-function MagneticFieldModel() {
+function MagneticFieldModel({ highlight }) {
+  const isMagnetHighlighted = highlight === "primary";
+  const areLinesHighlighted = highlight === "secondary" || highlight === "detail";
+
   return (
     <group>
-      <Box args={[3, 0.8, 0.8]}>
-        <meshStandardMaterial color="#ef4444" />
-      </Box>
-      <Box args={[1.5, 0.81, 0.81]} position={[0.75, 0, 0]}>
-        <meshStandardMaterial color="#3b82f6" />
-      </Box>
+      <HighlightWrapper active={isMagnetHighlighted}>
+        <Box args={[3, 0.8, 0.8]}>
+          <meshStandardMaterial color="#ef4444" emissive="#ef4444" emissiveIntensity={isMagnetHighlighted ? 2 : 0} />
+        </Box>
+        <Box args={[1.5, 0.81, 0.81]} position={[0.75, 0, 0]}>
+          <meshStandardMaterial color="#3b82f6" emissive="#3b82f6" emissiveIntensity={isMagnetHighlighted ? 2 : 0} />
+        </Box>
+      </HighlightWrapper>
       {Array.from({ length: 12 }).map((_, i) => {
         const radius = 1.2 + i * 0.4;
         return (
           <group key={i} rotation={[0, 0, (i * Math.PI) / 6]}>
             <Torus args={[radius, 0.01, 16, 100]} rotation={[Math.PI / 2, 0, 0]}>
-              <meshBasicMaterial color="white" transparent opacity={0.15} />
+              <meshBasicMaterial color="white" transparent opacity={areLinesHighlighted ? 0.5 : 0.15} />
             </Torus>
           </group>
         );
@@ -290,7 +377,8 @@ function MagneticFieldModel() {
   );
 }
 
-function PendulumModel() {
+function PendulumModel({ highlight }) {
+  const isBobHighlighted = highlight === "detail" || highlight === "secondary";
   const groupRef = useRef();
   useFrame((state) => {
     if (groupRef.current) groupRef.current.rotation.z = Math.sin(state.clock.getElapsedTime() * 2.5) * 0.7;
@@ -300,13 +388,18 @@ function PendulumModel() {
       <Cylinder args={[0.1, 0.1, 1.5]} rotation={[0, 0, Math.PI / 2]}><meshStandardMaterial color="#475569" /></Cylinder>
       <group ref={groupRef}>
         <Cylinder args={[0.03, 0.03, 5]} position={[0, -2.5, 0]}><meshStandardMaterial color="#94a3b8" /></Cylinder>
-        <Sphere args={[0.5]} position={[0, -5, 0]}><meshStandardMaterial color="#ef4444" /></Sphere>
+        <HighlightWrapper active={isBobHighlighted}>
+          <Sphere args={[0.5]} position={[0, -5, 0]}>
+            <meshStandardMaterial color="#ef4444" emissive="#ef4444" emissiveIntensity={isBobHighlighted ? 2 : 0} />
+          </Sphere>
+        </HighlightWrapper>
       </group>
     </group>
   );
 }
 
-function ProjectileMotionModel() {
+function ProjectileMotionModel({ highlight }) {
+  const isBallHighlighted = highlight !== "none";
   const ballRef = useRef();
   useFrame((state) => {
     const t = (state.clock.getElapsedTime() % 2.5);
@@ -317,12 +410,17 @@ function ProjectileMotionModel() {
   return (
     <group>
       <Box args={[12, 0.1, 6]} position={[0, -1, 0]}><meshStandardMaterial color="#1e293b" /></Box>
-      <Sphere ref={ballRef} args={[0.3]}><meshStandardMaterial color="#00f5ff" emissive="#00f5ff" emissiveIntensity={0.5} /></Sphere>
+      <HighlightWrapper active={isBallHighlighted}>
+        <Sphere ref={ballRef} args={[0.3]}>
+          <meshStandardMaterial color="#00f5ff" emissive="#00f5ff" emissiveIntensity={isBallHighlighted ? 5 : 0.5} />
+        </Sphere>
+      </HighlightWrapper>
     </group>
   );
 }
 
-function WaveMotionModel() {
+function WaveMotionModel({ highlight }) {
+  const isWaveHighlighted = highlight !== "none";
   const spheres = useRef([]);
   useFrame((state) => {
     spheres.current.forEach((s, i) => {
@@ -333,14 +431,19 @@ function WaveMotionModel() {
     <group>
       {Array.from({ length: 24 }).map((_, i) => (
         <Sphere key={i} ref={el => spheres.current[i] = el} args={[0.2]} position={[i * 0.5 - 5.5, 0, 0]}>
-          <meshStandardMaterial color="#c084fc" emissive="#c084fc" emissiveIntensity={0.3} />
+          <meshStandardMaterial 
+            color="#c084fc" 
+            emissive="#c084fc" 
+            emissiveIntensity={isWaveHighlighted ? 2 : 0.3} 
+          />
         </Sphere>
       ))}
     </group>
   );
 }
 
-function ACGeneratorModel() {
+function ACGeneratorModel({ highlight }) {
+  const isCoilHighlighted = highlight === "secondary" || highlight === "detail";
   const coilRef = useRef();
   useFrame((state) => {
     if (coilRef.current) coilRef.current.rotation.x = state.clock.getElapsedTime() * 2;
@@ -350,14 +453,19 @@ function ACGeneratorModel() {
       <Box args={[1, 3, 3]} position={[-3.5, 0, 0]}><meshStandardMaterial color="#ef4444" /></Box>
       <Box args={[1, 3, 3]} position={[3.5, 0, 0]}><meshStandardMaterial color="#3b82f6" /></Box>
       <group ref={coilRef}>
-        <Box args={[0.08, 2, 2.5]}><meshStandardMaterial color="#fbbf24" /></Box>
+        <HighlightWrapper active={isCoilHighlighted}>
+          <Box args={[0.08, 2, 2.5]}>
+            <meshStandardMaterial color="#fbbf24" emissive="#fbbf24" emissiveIntensity={isCoilHighlighted ? 2 : 0} />
+          </Box>
+        </HighlightWrapper>
         <Cylinder args={[0.1, 0.1, 6]} rotation={[0, 0, Math.PI / 2]}><meshStandardMaterial color="#94a3b8" /></Cylinder>
       </group>
     </group>
   );
 }
 
-function DCMotorModel() {
+function DCMotorModel({ highlight }) {
+  const isRotorHighlighted = highlight === "secondary" || highlight === "detail";
   const rotorRef = useRef();
   useFrame((state) => {
     if (rotorRef.current) rotorRef.current.rotation.y = state.clock.getElapsedTime() * 3;
@@ -366,28 +474,36 @@ function DCMotorModel() {
     <group>
       <Torus args={[3, 0.6, 16, 100, Math.PI]} rotation={[0, Math.PI / 2, 0]}><meshStandardMaterial color="#475569" /></Torus>
       <group ref={rotorRef}>
-        <Box args={[2, 0.6, 0.6]}><meshStandardMaterial color="#ef4444" /></Box>
+        <HighlightWrapper active={isRotorHighlighted}>
+          <Box args={[2, 0.6, 0.6]}>
+            <meshStandardMaterial color="#ef4444" emissive="#ef4444" emissiveIntensity={isRotorHighlighted ? 2 : 0} />
+          </Box>
+        </HighlightWrapper>
         <Cylinder args={[0.15, 0.15, 4]}><meshStandardMaterial color="#94a3b8" /></Cylinder>
       </group>
     </group>
   );
 }
 
-function LensModel() {
+function LensModel({ highlight }) {
+  const isLensHighlighted = highlight === "primary";
+  const areRaysHighlighted = highlight === "secondary" || highlight === "detail";
   return (
     <group>
-      <mesh rotation={[0, Math.PI / 2, 0]}>
-        <sphereGeometry args={[4, 32, 32, 0, Math.PI * 2, 1.3, 0.5]} />
-        <meshStandardMaterial color="#00f5ff" transparent opacity={0.3} />
-      </mesh>
+      <HighlightWrapper active={isLensHighlighted}>
+        <mesh rotation={[0, Math.PI / 2, 0]}>
+          <sphereGeometry args={[4, 32, 32, 0, Math.PI * 2, 1.3, 0.5]} />
+          <meshStandardMaterial color="#00f5ff" transparent opacity={isLensHighlighted ? 0.6 : 0.3} emissive="#00f5ff" emissiveIntensity={isLensHighlighted ? 1 : 0} />
+        </mesh>
+      </HighlightWrapper>
       {Array.from({ length: 7 }).map((_, i) => (
-        <PhysicsRay key={i} y={i * 0.4 - 1.2} />
+        <PhysicsRay key={i} y={i * 0.4 - 1.2} highlighted={areRaysHighlighted} />
       ))}
     </group>
   );
 }
 
-function PhysicsRay({ y }) {
+function PhysicsRay({ y, highlighted }) {
   const points = useMemo(() => [
     new THREE.Vector3(-6, y, 0),
     new THREE.Vector3(0, y, 0),
@@ -396,12 +512,13 @@ function PhysicsRay({ y }) {
   return (
     <line>
       <bufferGeometry attach="geometry" setFromPoints={points} />
-      <lineBasicMaterial attach="material" color="#fbbf24" linewidth={2} />
+      <lineBasicMaterial attach="material" color={highlighted ? "#fbbf24" : "#fcd34d"} linewidth={highlighted ? 5 : 2} />
     </line>
   );
 }
 
-function PulleySystemModel() {
+function PulleySystemModel({ highlight }) {
+  const isBlockHighlighted = highlight === "detail" || highlight === "secondary";
   const weightRef = useRef();
   useFrame((state) => {
     if (weightRef.current) weightRef.current.position.y = Math.sin(state.clock.getElapsedTime() * 1.5) * 1.2 - 2;
@@ -411,14 +528,20 @@ function PulleySystemModel() {
       <Cylinder args={[1.2, 1.2, 0.5]} rotation={[Math.PI / 2, 0, 0]} position={[0, 2.5, 0]}><meshStandardMaterial color="#475569" /></Cylinder>
       <group ref={weightRef}>
         <Cylinder args={[0.03, 0.03, 5]} position={[1.2, 2.5, 0]}><meshStandardMaterial color="#94a3b8" /></Cylinder>
-        <Box args={[1.2, 1.2, 1.2]} position={[1.2, 0, 0]}><meshStandardMaterial color="#ef4444" /></Box>
+        <HighlightWrapper active={isBlockHighlighted}>
+          <Box args={[1.2, 1.2, 1.2]} position={[1.2, 0, 0]}>
+            <meshStandardMaterial color="#ef4444" emissive="#ef4444" emissiveIntensity={isBlockHighlighted ? 2 : 0} />
+          </Box>
+        </HighlightWrapper>
       </group>
       <Cylinder args={[0.03, 0.03, 8]} position={[-1.2, -1.5, 0]}><meshStandardMaterial color="#94a3b8" /></Cylinder>
     </group>
   );
 }
 
-function SolarSystemModel() {
+function SolarSystemModel({ highlight }) {
+  const isSunHighlighted = highlight === "primary";
+  const isSystemHighlighted = highlight === "secondary" || highlight === "detail";
   const earthRef = useRef();
   const moonRef = useRef();
   useFrame((state) => {
@@ -428,11 +551,13 @@ function SolarSystemModel() {
   });
   return (
     <group>
-      <Sphere args={[1.8, 32, 32]}><meshStandardMaterial color="#fbbf24" emissive="#fbbf24" emissiveIntensity={1.2} /></Sphere>
+      <Sphere args={[1.8, 32, 32]}>
+        <meshStandardMaterial color="#fbbf24" emissive="#fbbf24" emissiveIntensity={isSunHighlighted ? 3 : 1.2} />
+      </Sphere>
       <group ref={earthRef}>
-        <Sphere args={[0.7, 32, 32]}><meshStandardMaterial color="#3b82f6" /></Sphere>
+        <Sphere args={[0.7, 32, 32]}><meshStandardMaterial color="#3b82f6" emissive="#3b82f6" emissiveIntensity={isSystemHighlighted ? 1 : 0} /></Sphere>
         <group ref={moonRef}>
-          <Sphere args={[0.25, 16, 16]}><meshStandardMaterial color="#94a3b8" /></Sphere>
+          <Sphere args={[0.25, 16, 16]}><meshStandardMaterial color="#94a3b8" emissive="#94a3b8" emissiveIntensity={isSystemHighlighted ? 1 : 0} /></Sphere>
         </group>
       </group>
     </group>
@@ -441,7 +566,9 @@ function SolarSystemModel() {
 
 // --- Maths Model Components ---
 
-function CubeModel() {
+function CubeModel({ highlight }) {
+  const isSkeletonHighlighted = highlight === "secondary";
+  const areVerticesHighlighted = highlight === "detail";
   const groupRef = useRef();
   useFrame((state) => {
     if (groupRef.current) {
@@ -471,34 +598,30 @@ function CubeModel() {
 
   return (
     <group ref={groupRef}>
-      {/* Main transparent cube */}
       <Box args={[3, 3, 3]}>
         <meshStandardMaterial color="#f472b6" transparent opacity={0.15} />
       </Box>
-      {/* Inner wireframe / Face grid */}
       <Box args={[3, 3, 3, 3, 3, 3]}>
-        <meshBasicMaterial color="#f472b6" wireframe transparent opacity={0.2} />
+        <meshBasicMaterial color="#f472b6" wireframe transparent opacity={isSkeletonHighlighted ? 0.6 : 0.2} />
       </Box>
-      {/* Thick Edges */}
       <lineSegments geometry={edgesGeometry}>
-        <lineBasicMaterial color="#ec4899" linewidth={2} />
+        <lineBasicMaterial color={isSkeletonHighlighted ? "#fbbf24" : "#ec4899"} linewidth={2} />
       </lineSegments>
-      {/* Vertices */}
       {corners.map((pos, i) => (
         <Sphere key={i} args={[0.08]} position={pos}>
-          <meshStandardMaterial color="#fbbf24" emissive="#fbbf24" emissiveIntensity={0.5} />
+          <meshStandardMaterial color="#fbbf24" emissive="#fbbf24" emissiveIntensity={areVerticesHighlighted ? 5 : 0.5} />
         </Sphere>
       ))}
-      {/* Diagonal Line */}
       <line>
         <bufferGeometry attach="geometry" setFromPoints={diagPoints} />
-        <lineBasicMaterial attach="material" color="#fbbf24" />
+        <lineBasicMaterial attach="material" color="#fbbf24" transparent opacity={highlight === "detail" ? 1 : 0.3} />
       </line>
     </group>
   );
 }
 
-function SphereModel() {
+function SphereModel({ highlight }) {
+  const areRingsHighlighted = highlight === "secondary" || highlight === "detail";
   const groupRef = useRef();
   useFrame((state) => {
     if (groupRef.current) {
@@ -514,40 +637,34 @@ function SphereModel() {
 
   return (
     <group ref={groupRef}>
-      {/* Transparent Sphere */}
       <Sphere args={[2, 32, 32]}>
         <meshStandardMaterial color="#f472b6" transparent opacity={0.15} />
       </Sphere>
-      {/* Wireframe for grid effect */}
       <Sphere args={[2, 16, 16]}>
         <meshBasicMaterial color="#f472b6" wireframe transparent opacity={0.15} />
       </Sphere>
       
-      {/* Great Circles (Equator & Meridians) */}
       <Torus args={[2, 0.015, 32, 100]} rotation={[Math.PI / 2, 0, 0]}>
-        <meshBasicMaterial color="#ec4899" />
+        <meshBasicMaterial color={areRingsHighlighted ? "#fbbf24" : "#ec4899"} />
       </Torus>
       <Torus args={[2, 0.015, 32, 100]}>
-        <meshBasicMaterial color="#ec4899" />
+        <meshBasicMaterial color={areRingsHighlighted ? "#fbbf24" : "#ec4899"} />
       </Torus>
       <Torus args={[2, 0.015, 32, 100]} rotation={[0, Math.PI / 2, 0]}>
-        <meshBasicMaterial color="#ec4899" />
+        <meshBasicMaterial color={areRingsHighlighted ? "#fbbf24" : "#ec4899"} />
       </Torus>
 
-      {/* Latitude Rings */}
       <Torus args={[Math.sqrt(3), 0.01, 32, 100]} position={[0, 1, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <meshBasicMaterial color="#f472b6" transparent opacity={0.6} />
+        <meshBasicMaterial color="#f472b6" transparent opacity={areRingsHighlighted ? 1 : 0.6} />
       </Torus>
       <Torus args={[Math.sqrt(3), 0.01, 32, 100]} position={[0, -1, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <meshBasicMaterial color="#f472b6" transparent opacity={0.6} />
+        <meshBasicMaterial color="#f472b6" transparent opacity={areRingsHighlighted ? 1 : 0.6} />
       </Torus>
 
-      {/* Radius Line */}
       <line>
         <bufferGeometry attach="geometry" setFromPoints={radiusPoints} />
         <lineBasicMaterial attach="material" color="#fbbf24" />
       </line>
-      {/* Center and Edge Point */}
       <Sphere args={[0.08]} position={[0, 0, 0]}>
         <meshStandardMaterial color="#fbbf24" emissive="#fbbf24" emissiveIntensity={0.5} />
       </Sphere>
@@ -558,12 +675,13 @@ function SphereModel() {
   );
 }
 
-function ConeModel() {
+function ConeModel({ highlight }) {
+  const isSkeletonHighlighted = highlight !== "none";
   return (
     <group position={[0, -1, 0]}>
       <mesh>
         <coneGeometry args={[2, 4, 32]} />
-        <meshStandardMaterial color="#f472b6" wireframe />
+        <meshStandardMaterial color="#f472b6" wireframe emissive="#f472b6" emissiveIntensity={isSkeletonHighlighted ? 1 : 0} />
       </mesh>
       <mesh>
         <coneGeometry args={[2, 4, 32]} />
@@ -573,12 +691,13 @@ function ConeModel() {
   );
 }
 
-function CylinderModel() {
+function CylinderModel({ highlight }) {
+  const isSkeletonHighlighted = highlight !== "none";
   return (
     <group>
       <mesh>
         <cylinderGeometry args={[1.5, 1.5, 4, 32]} />
-        <meshStandardMaterial color="#f472b6" wireframe />
+        <meshStandardMaterial color="#f472b6" wireframe emissive="#f472b6" emissiveIntensity={isSkeletonHighlighted ? 1 : 0} />
       </mesh>
       <mesh>
         <cylinderGeometry args={[1.5, 1.5, 4, 32]} />
@@ -588,12 +707,13 @@ function CylinderModel() {
   );
 }
 
-function PyramidModel() {
+function PyramidModel({ highlight }) {
+  const isSkeletonHighlighted = highlight !== "none";
   return (
     <group position={[0, -1, 0]}>
       <mesh>
         <coneGeometry args={[2.5, 3.5, 4]} />
-        <meshStandardMaterial color="#f472b6" wireframe />
+        <meshStandardMaterial color="#f472b6" wireframe emissive="#f472b6" emissiveIntensity={isSkeletonHighlighted ? 1 : 0} />
       </mesh>
       <mesh>
         <coneGeometry args={[2.5, 3.5, 4]} />
@@ -603,22 +723,24 @@ function PyramidModel() {
   );
 }
 
-function CoordinatePlaneModel() {
+function CoordinatePlaneModel({ highlight }) {
+  const isPlaneHighlighted = highlight !== "none";
   const groupRef = useRef();
   useFrame((state) => {
     if (groupRef.current) groupRef.current.rotation.y = state.clock.getElapsedTime() * 0.2;
   });
   return (
     <group ref={groupRef}>
-      <gridHelper args={[10, 10, "#f472b6", "#475569"]} rotation={[0, 0, 0]} />
-      <gridHelper args={[10, 10, "#f472b6", "#475569"]} rotation={[Math.PI / 2, 0, 0]} />
-      <gridHelper args={[10, 10, "#f472b6", "#475569"]} rotation={[0, 0, Math.PI / 2]} />
+      <gridHelper args={[10, 10, isPlaneHighlighted ? "#fbbf24" : "#f472b6", "#475569"]} rotation={[0, 0, 0]} />
+      <gridHelper args={[10, 10, isPlaneHighlighted ? "#fbbf24" : "#f472b6", "#475569"]} rotation={[Math.PI / 2, 0, 0]} />
+      <gridHelper args={[10, 10, isPlaneHighlighted ? "#fbbf24" : "#f472b6", "#475569"]} rotation={[0, 0, Math.PI / 2]} />
       <axesHelper args={[6]} />
     </group>
   );
 }
 
-function VectorVisualizationModel() {
+function VectorVisualizationModel({ highlight }) {
+  const isVectorHighlighted = highlight !== "none";
   const dir1 = useMemo(() => new THREE.Vector3(1, 1, 1).normalize(), []);
   const dir2 = useMemo(() => new THREE.Vector3(-1, 0.5, 0).normalize(), []);
   const origin = useMemo(() => new THREE.Vector3(0, 0, 0), []);
@@ -628,14 +750,15 @@ function VectorVisualizationModel() {
   });
   return (
     <group ref={groupRef}>
-      <arrowHelper args={[dir1, origin, 5, 0xf472b6, 1, 0.5]} />
-      <arrowHelper args={[dir2, origin, 4, 0x3b82f6, 1, 0.5]} />
+      <arrowHelper args={[dir1, origin, 5, isVectorHighlighted ? 0xfbbf24 : 0xf472b6, 1, 0.5]} />
+      <arrowHelper args={[dir2, origin, 4, isVectorHighlighted ? 0xfbbf24 : 0x3b82f6, 1, 0.5]} />
       <gridHelper args={[10, 10, "#475569", "#1e293b"]} />
     </group>
   );
 }
 
-function ParabolaGraphModel() {
+function ParabolaGraphModel({ highlight }) {
+  const isGraphHighlighted = highlight !== "none";
   const points = useMemo(() => {
     const p = [];
     for (let x = -5; x <= 5; x += 0.1) {
@@ -649,16 +772,17 @@ function ParabolaGraphModel() {
       <gridHelper args={[10, 10, "#475569", "#1e293b"]} rotation={[Math.PI / 2, 0, 0]} />
       <line>
         <bufferGeometry attach="geometry" setFromPoints={points} />
-        <lineBasicMaterial attach="material" color="#f472b6" linewidth={3} />
+        <lineBasicMaterial attach="material" color={isGraphHighlighted ? "#fbbf24" : "#f472b6"} linewidth={3} />
       </line>
       <Sphere args={[0.15]} position={[0, -2, 0]}>
-        <meshStandardMaterial color="#3b82f6" emissive="#3b82f6" />
+        <meshStandardMaterial color="#3b82f6" emissive="#3b82f6" emissiveIntensity={isGraphHighlighted ? 2 : 1} />
       </Sphere>
     </group>
   );
 }
 
-function SineWaveGraphModel() {
+function SineWaveGraphModel({ highlight }) {
+  const isGraphHighlighted = highlight !== "none";
   const lineRef = useRef();
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
@@ -676,15 +800,16 @@ function SineWaveGraphModel() {
       <gridHelper args={[10, 10, "#475569", "#1e293b"]} rotation={[Math.PI / 2, 0, 0]} />
       <line ref={lineRef}>
         <bufferGeometry attach="geometry" />
-        <lineBasicMaterial attach="material" color="#f472b6" linewidth={3} />
+        <lineBasicMaterial attach="material" color={isGraphHighlighted ? "#fbbf24" : "#f472b6"} linewidth={3} />
       </line>
     </group>
   );
 }
 
-function FunctionSurfaceModel() {
+function FunctionSurfaceModel({ highlight }) {
+  const isSurfaceHighlighted = highlight !== "none";
   const meshRef = useRef();
-  
+
   useFrame((state) => {
     if (meshRef.current) {
       meshRef.current.rotation.y = state.clock.getElapsedTime() * 0.3;
@@ -707,9 +832,62 @@ function FunctionSurfaceModel() {
 
   return (
     <mesh ref={meshRef} geometry={geometry} rotation={[-Math.PI / 3, 0, 0]}>
-      <meshStandardMaterial color="#f472b6" wireframe />
+      <meshStandardMaterial color={isSurfaceHighlighted ? "#fbbf24" : "#f472b6"} wireframe emissive={isSurfaceHighlighted ? "#fbbf24" : "black"} emissiveIntensity={isSurfaceHighlighted ? 1 : 0} />
       <meshStandardMaterial color="#f472b6" transparent opacity={0.4} side={THREE.DoubleSide} />
     </mesh>
+  );
+}
+
+// --- AI Procedural Components (Placeholders) ---
+
+function AIChemistryPlaceholder({ highlight }) {
+  const isHigh = highlight !== "none";
+  return (
+    <group>
+      <Sphere args={[0.8, 32, 32]}>
+        <meshStandardMaterial color="#3b82f6" emissive="#3b82f6" emissiveIntensity={isHigh ? 2 : 0.5} />
+      </Sphere>
+      {[1, -1].map((x, i) => (
+        <group key={i} position={[x * 1.2, 0.8, 0]}>
+          <Sphere args={[0.4, 32, 32]}>
+            <meshStandardMaterial color="#ffffff" />
+          </Sphere>
+          <Cylinder args={[0.1, 0.1, 1]} position={[-x * 0.6, -0.4, 0]} rotation={[0, 0, x * Math.PI / 4]}>
+            <meshStandardMaterial color="#64748b" />
+          </Cylinder>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+function AIPhysicsPlaceholder({ highlight }) {
+  const isHigh = highlight !== "none";
+  return (
+    <group>
+      <Box args={[3, 0.5, 3]} position={[0, -1.5, 0]}>
+        <meshStandardMaterial color="#475569" />
+      </Box>
+      <Torus args={[2, 0.1, 16, 100]} rotation={[Math.PI / 2, 0, 0]}>
+        <meshStandardMaterial color="#fbbf24" emissive="#fbbf24" emissiveIntensity={isHigh ? 2 : 0.5} />
+      </Torus>
+      <Cylinder args={[0.2, 0.2, 3]} position={[0, 0, 0]}>
+        <meshStandardMaterial color="#94a3b8" />
+      </Cylinder>
+    </group>
+  );
+}
+
+function AIMathsPlaceholder({ highlight }) {
+  const isHigh = highlight !== "none";
+  return (
+    <group>
+      <gridHelper args={[10, 10, "#f472b6", "#475569"]} />
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <torusKnotGeometry args={[1.5, 0.5, 100, 16]} />
+        <meshStandardMaterial color="#f472b6" wireframe emissive="#f472b6" emissiveIntensity={isHigh ? 1 : 0} />
+      </mesh>
+    </group>
   );
 }
 
@@ -803,7 +981,7 @@ const modelData = {
       id: "c1", 
       name: "Hydrogen Atom", 
       category: "Atomic", 
-      Component: () => <AtomStructure nucleusColor="#ef4444" shells={[1]} />,
+      Component: (props) => <AtomStructure nucleusColor="#ef4444" shells={[1]} {...props} />,
       explanation: "The simplest element, consisting of one proton in the nucleus and one electron in the 1s orbital.",
       observation: "Observe the single electron orbit. In quantum mechanics, this represents a probability density cloud (1s orbital)."
     },
@@ -811,7 +989,7 @@ const modelData = {
       id: "c2", 
       name: "Helium Atom", 
       category: "Atomic", 
-      Component: () => <AtomStructure nucleusColor="#fbbf24" shells={[2]} />,
+      Component: (props) => <AtomStructure nucleusColor="#fbbf24" shells={[2]} {...props} />,
       explanation: "A noble gas with a completely filled first electron shell (1s²). This configuration makes it chemically inert.",
       observation: "Notice the two electrons sharing the same inner shell. This stability is the reason helium doesn't easily form bonds."
     },
@@ -819,7 +997,7 @@ const modelData = {
       id: "c3", 
       name: "Carbon Atom", 
       category: "Atomic", 
-      Component: () => <AtomStructure nucleusColor="#334155" shells={[2, 4]} />,
+      Component: (props) => <AtomStructure nucleusColor="#334155" shells={[2, 4]} {...props} />,
       explanation: "The backbone of organic chemistry. It has 4 valence electrons, allowing it to form 4 stable covalent bonds.",
       observation: "Observe the two shells. The outer shell has 4 electrons, which are the 'valence' electrons used in chemical reactions."
     },
@@ -827,7 +1005,7 @@ const modelData = {
       id: "c4", 
       name: "Oxygen Atom", 
       category: "Atomic", 
-      Component: () => <AtomStructure nucleusColor="#ef4444" shells={[2, 6]} />,
+      Component: (props) => <AtomStructure nucleusColor="#ef4444" shells={[2, 6]} {...props} />,
       explanation: "A highly electronegative element with 6 valence electrons. It typically seeks to gain 2 more to complete its octet.",
       observation: "Notice the 6 electrons in the outer shell. Its high reactivity comes from its 'hunger' to fill those remaining two spots."
     },
@@ -982,31 +1160,115 @@ function Models() {
   const [showConcept, setShowConcept] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
   const [simStep, setSimStep] = useState(0);
+  const [customModels, setCustomModels] = useState([]);
 
   const getSimulationSteps = (model) => {
     if (model.steps) return model.steps;
-    return [
-      { title: "Introduction", content: `Welcome to the simulation for ${model.name}. This interactive model allows you to explore the spatial properties of the concept in 3D.` },
-      { title: "Main Parts", content: `This model consists of distinct parts that interact to demonstrate the principles of ${model.category}.` },
-      { title: "How it works", content: model.explanation || `By observing the animation, you can see how the components behave according to the laws of ${model.category}.` },
-      { title: "JEE Relevance", content: `Understanding ${model.name} is crucial for solving complex JEE problems related to ${model.category}.` },
-      { title: "Key Observation", content: model.observation || `Rotate and zoom to fully understand the 3D structure.` }
+    
+    const expl = model.explanation || `This visualizes the concepts of ${model.category}.`;
+    const obs = model.observation || `Zoom in and rotate to observe the spatial properties.`;
+    
+    const explSentences = expl.match(/[^.!?]+[.!?]+/g) || [expl];
+    const obsSentences = obs.match(/[^.!?]+[.!?]+/g) || [obs];
+
+    const step1Expl = explSentences[0]?.trim();
+    const step2Expl = explSentences.slice(1).join(" ").trim();
+    
+    const step1Obs = obsSentences[0]?.trim();
+    const step2Obs = obsSentences.slice(1).join(" ").trim();
+
+    const steps = [
+      { 
+        title: "Welcome! 👋", 
+        highlight: "none",
+        content: `Hello future engineer! Let's break down the ${model.name}. Go ahead—click and drag to rotate it and get a feel for the 3D space.` 
+      },
+      { 
+        title: "The Core Idea", 
+        highlight: "primary",
+        content: `${step1Expl} Think of it as a logical, real-world system rather than just textbook theory.` 
+      }
     ];
+
+    if (step2Expl) {
+      steps.push({ 
+        title: "How it works ⚙️", 
+        highlight: "secondary",
+        content: `${step2Expl} Everything follows strict mathematical and physical laws.` 
+      });
+    }
+
+    steps.push({ 
+      title: "Look at this part 👀", 
+      highlight: "detail",
+      content: `${step1Obs} Focus closely on that specific interaction.` 
+    });
+
+    if (step2Obs) {
+      steps.push({ 
+        title: "Notice the pattern", 
+        highlight: "detail",
+        content: `${step2Obs} This is exactly what your formulas are trying to calculate.` 
+      });
+    }
+
+    steps.push(
+      { 
+        title: "JEE Relevance 🎯", 
+        highlight: "none",
+        content: `Why do we care? JEE loves asking tricky questions on ${model.category}. Visualizing this model in your head saves you from making silly formula mistakes during the exam.` 
+      },
+      { 
+        title: "Mental Check ✅", 
+        highlight: "none",
+        content: `Does it make sense? Play with the simulation until you can close your eyes and picture it perfectly. Then you're ready to move on!` 
+      }
+    );
+
+    return steps;
   };
 
   const filteredModels = useMemo(() => {
-    return models.filter(m => m.name.toLowerCase().includes(searchQuery.toLowerCase()));
-  }, [models, searchQuery]);
+    const standard = models.filter(m => m.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    const custom = customModels.filter(m => m.subject === subject && m.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    return [...standard, ...custom];
+  }, [models, customModels, searchQuery, subject]);
+
+  const generateAiModel = () => {
+    if (!searchQuery.trim()) return;
+
+    const id = `ai-${Date.now()}`;
+    const name = searchQuery.trim();
+    
+    const AiComp = subject === "chemistry" ? AIChemistryPlaceholder 
+                 : subject === "physics" ? AIPhysicsPlaceholder 
+                 : AIMathsPlaceholder;
+
+    const newModel = {
+      id,
+      name,
+      category: "AI Generated",
+      subject,
+      isAi: true,
+      Component: AiComp,
+      explanation: `This is an AI-generated procedural model for ${name}. It uses subject-specific geometric approximations to visualize the concept.`,
+      observation: `Observe the unique spatial arrangement generated for ${name}. Rotate the model to explore its structure from different angles.`
+    };
+
+    setCustomModels(prev => [...prev, newModel]);
+    setSelectedModel(newModel);
+    setShowConcept(false);
+  };
 
   // Handle case where subject changed but selectedModel is from old subject
   const currentModel = useMemo(() => {
-    const found = models.find(m => m.id === selectedModel.id);
+    const found = filteredModels.find(m => m.id === selectedModel.id);
     if (!found) {
       setShowConcept(false);
-      return models[0];
+      return filteredModels[0] || models[0];
     }
     return found;
-  }, [models, selectedModel]);
+  }, [filteredModels, selectedModel, models]);
 
   const ActiveModel = currentModel.Component;
 
@@ -1046,21 +1308,40 @@ function Models() {
                       setSelectedModel(model);
                       setShowConcept(false);
                     }}
-                    className={`group flex flex-col items-center rounded-2xl p-4 text-center transition-all ${
+                    className={`group relative flex flex-col items-center rounded-2xl p-4 text-center transition-all ${
                       currentModel.id === model.id 
                         ? "bg-white/10 ring-1 ring-white/20" 
                         : "bg-white/[0.02] hover:bg-white/5"
                     }`}
                   >
+                    {model.isAi && (
+                      <div className="absolute top-2 right-2 rounded-full bg-electric/20 px-1.5 py-0.5 text-[7px] font-black uppercase text-electric ring-1 ring-electric/30">
+                        AI
+                      </div>
+                    )}
                     <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 transition-transform group-hover:scale-110 ${currentModel.id === model.id ? meta.color : "text-slate-400"}`}>
-                      <BoxIcon size={20} />
+                      {model.isAi ? <Sparkles size={18} className="text-electric" /> : <BoxIcon size={20} />}
                     </div>
                     <span className={`text-[11px] font-black leading-tight ${currentModel.id === model.id ? "text-white" : "text-slate-400 group-hover:text-slate-200"}`}>
                       {model.name}
                     </span>
                   </button>
                 ))}
-                {filteredModels.length === 0 && (
+                
+                {filteredModels.length === 0 && searchQuery && (
+                  <button
+                    onClick={generateAiModel}
+                    className="col-span-2 group flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/20 bg-white/5 p-8 text-center transition-all hover:bg-white/10 hover:border-electric"
+                  >
+                    <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-electric/10 text-electric shadow-[0_0_20px_rgba(0,245,255,0.15)] group-hover:scale-110 transition-transform">
+                      <Sparkles size={28} />
+                    </div>
+                    <p className="text-sm font-black text-white">Generate model</p>
+                    <p className="mt-1 text-[11px] font-bold text-slate-500">"{searchQuery}"</p>
+                  </button>
+                )}
+
+                {filteredModels.length === 0 && !searchQuery && (
                   <div className="col-span-2 p-8 text-center text-sm font-medium text-slate-500">
                     No models found.
                   </div>
@@ -1083,7 +1364,7 @@ function Models() {
                 <Suspense fallback={null}>
                   <Float speed={1.5} rotationIntensity={0.5} floatIntensity={0.5}>
                     <Center>
-                      <ActiveModel />
+                      <ActiveModel highlight={isSimulating ? getSimulationSteps(currentModel)[simStep].highlight : "none"} />
                     </Center>
                   </Float>
                   <OrbitControls enablePan={false} minDistance={2} maxDistance={20} />
@@ -1104,12 +1385,6 @@ function Models() {
               </div>
 
               <div className="absolute bottom-8 right-8 z-10 flex items-center gap-3">
-                <button 
-                  onClick={() => setSelectedModel(models[0])}
-                  className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-black/40 text-white transition hover:bg-white/10 backdrop-blur-xl"
-                >
-                  <RotateCcw size={20} />
-                </button>
                 <button 
                   onClick={() => { setIsSimulating(true); setSimStep(0); setShowConcept(false); }}
                   className="flex items-center gap-3 rounded-2xl bg-white px-6 py-3 text-sm font-black text-slate-950 transition hover:bg-slate-200 shadow-lg"
@@ -1254,7 +1529,7 @@ function Models() {
                   <Suspense fallback={null}>
                     <Float speed={1.5} rotationIntensity={0.5} floatIntensity={0.5}>
                       <Center>
-                        <ActiveModel />
+                        <ActiveModel highlight={getSimulationSteps(currentModel)[simStep].highlight} />
                       </Center>
                     </Float>
                     <OrbitControls enablePan={false} minDistance={2} maxDistance={20} />

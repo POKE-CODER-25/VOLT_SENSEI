@@ -85,7 +85,11 @@ function Quiz() {
       .map((answer) => answer.topic)
       .filter(Boolean);
     const timeSpent = startedAt ? Math.round((Date.now() - startedAt) / 1000) : 0;
-    const xpEarned = answers.reduce((sum, answer) => sum + (answer.isCorrect ? answer.xpReward : 15), 0);
+    
+    let xpEarned = answers.reduce((sum, answer) => sum + (answer.isCorrect ? answer.xpReward : 0), 0);
+    if (accuracy === 100) xpEarned += 250;
+    else if (accuracy >= 80) xpEarned += 100;
+    if (difficulty === "JEE Advanced") xpEarned += 150;
 
     return {
       correct,
@@ -98,7 +102,7 @@ function Quiz() {
       weakestTopic: weakAreas[0] || "None detected",
       averageResponseTime: answers.length ? Math.round(answers.reduce((sum, answer) => sum + answer.responseTime, 0) / answers.length) : 0,
     };
-  }, [answers, questions.length, startedAt, topic]);
+  }, [answers, questions.length, startedAt, topic, difficulty]);
 
   const startQuiz = async () => {
     setLoading(true);
@@ -147,7 +151,11 @@ function Quiz() {
     const accuracy = Math.round((correct / questions.length) * 100);
     const weakAreas = [...new Set(finalAnswers.filter((answer) => !answer.isCorrect).map((answer) => answer.topic))];
     const timeSpent = startedAt ? Math.round((Date.now() - startedAt) / 1000) : 0;
-    const xpEarned = finalAnswers.reduce((sum, answer) => sum + (answer.isCorrect ? answer.xpReward : 15), 0);
+    
+    let xpEarned = finalAnswers.reduce((sum, answer) => sum + (answer.isCorrect ? answer.xpReward : 0), 0);
+    if (accuracy === 100) xpEarned += 250;
+    else if (accuracy >= 80) xpEarned += 100;
+    if (difficulty === "JEE Advanced") xpEarned += 150;
 
     setSaving(true);
     try {
