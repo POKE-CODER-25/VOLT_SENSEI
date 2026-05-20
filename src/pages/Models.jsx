@@ -439,13 +439,177 @@ function SolarSystemModel() {
   );
 }
 
-// --- Specific Maths placeholders ---
+// --- Maths Model Components ---
 
-function CalculusModel() {
+function CubeModel() {
   return (
-    <mesh rotation={[Math.PI / 4, Math.PI / 4, 0]}>
-      <torusKnotGeometry args={[1, 0.3, 128, 16]} />
-      <MeshDistortMaterial color="#c084fc" speed={2} distort={0.4} radius={1} />
+    <Box args={[3, 3, 3]}>
+      <meshStandardMaterial color="#f472b6" wireframe />
+      <meshStandardMaterial color="#f472b6" transparent opacity={0.3} />
+    </Box>
+  );
+}
+
+function SphereModel() {
+  return (
+    <Sphere args={[2, 32, 32]}>
+      <meshStandardMaterial color="#f472b6" wireframe />
+      <meshStandardMaterial color="#f472b6" transparent opacity={0.3} />
+    </Sphere>
+  );
+}
+
+function ConeModel() {
+  return (
+    <group position={[0, -1, 0]}>
+      <mesh>
+        <coneGeometry args={[2, 4, 32]} />
+        <meshStandardMaterial color="#f472b6" wireframe />
+      </mesh>
+      <mesh>
+        <coneGeometry args={[2, 4, 32]} />
+        <meshStandardMaterial color="#f472b6" transparent opacity={0.3} />
+      </mesh>
+    </group>
+  );
+}
+
+function CylinderModel() {
+  return (
+    <group>
+      <mesh>
+        <cylinderGeometry args={[1.5, 1.5, 4, 32]} />
+        <meshStandardMaterial color="#f472b6" wireframe />
+      </mesh>
+      <mesh>
+        <cylinderGeometry args={[1.5, 1.5, 4, 32]} />
+        <meshStandardMaterial color="#f472b6" transparent opacity={0.3} />
+      </mesh>
+    </group>
+  );
+}
+
+function PyramidModel() {
+  return (
+    <group position={[0, -1, 0]}>
+      <mesh>
+        <coneGeometry args={[2.5, 3.5, 4]} />
+        <meshStandardMaterial color="#f472b6" wireframe />
+      </mesh>
+      <mesh>
+        <coneGeometry args={[2.5, 3.5, 4]} />
+        <meshStandardMaterial color="#f472b6" transparent opacity={0.3} />
+      </mesh>
+    </group>
+  );
+}
+
+function CoordinatePlaneModel() {
+  const groupRef = useRef();
+  useFrame((state) => {
+    if (groupRef.current) groupRef.current.rotation.y = state.clock.getElapsedTime() * 0.2;
+  });
+  return (
+    <group ref={groupRef}>
+      <gridHelper args={[10, 10, "#f472b6", "#475569"]} rotation={[0, 0, 0]} />
+      <gridHelper args={[10, 10, "#f472b6", "#475569"]} rotation={[Math.PI / 2, 0, 0]} />
+      <gridHelper args={[10, 10, "#f472b6", "#475569"]} rotation={[0, 0, Math.PI / 2]} />
+      <axesHelper args={[6]} />
+    </group>
+  );
+}
+
+function VectorVisualizationModel() {
+  const dir1 = useMemo(() => new THREE.Vector3(1, 1, 1).normalize(), []);
+  const dir2 = useMemo(() => new THREE.Vector3(-1, 0.5, 0).normalize(), []);
+  const origin = useMemo(() => new THREE.Vector3(0, 0, 0), []);
+  const groupRef = useRef();
+  useFrame((state) => {
+    if (groupRef.current) groupRef.current.rotation.y = state.clock.getElapsedTime() * 0.5;
+  });
+  return (
+    <group ref={groupRef}>
+      <arrowHelper args={[dir1, origin, 5, 0xf472b6, 1, 0.5]} />
+      <arrowHelper args={[dir2, origin, 4, 0x3b82f6, 1, 0.5]} />
+      <gridHelper args={[10, 10, "#475569", "#1e293b"]} />
+    </group>
+  );
+}
+
+function ParabolaGraphModel() {
+  const points = useMemo(() => {
+    const p = [];
+    for (let x = -5; x <= 5; x += 0.1) {
+      p.push(new THREE.Vector3(x, (x * x) / 4 - 2, 0));
+    }
+    return p;
+  }, []);
+
+  return (
+    <group>
+      <gridHelper args={[10, 10, "#475569", "#1e293b"]} rotation={[Math.PI / 2, 0, 0]} />
+      <line>
+        <bufferGeometry attach="geometry" setFromPoints={points} />
+        <lineBasicMaterial attach="material" color="#f472b6" linewidth={3} />
+      </line>
+      <Sphere args={[0.15]} position={[0, -2, 0]}>
+        <meshStandardMaterial color="#3b82f6" emissive="#3b82f6" />
+      </Sphere>
+    </group>
+  );
+}
+
+function SineWaveGraphModel() {
+  const lineRef = useRef();
+  useFrame((state) => {
+    const time = state.clock.getElapsedTime();
+    const points = [];
+    for (let x = -5; x <= 5; x += 0.1) {
+      points.push(new THREE.Vector3(x, Math.sin(x + time * 2) * 2, 0));
+    }
+    if (lineRef.current) {
+      lineRef.current.geometry.setFromPoints(points);
+    }
+  });
+
+  return (
+    <group>
+      <gridHelper args={[10, 10, "#475569", "#1e293b"]} rotation={[Math.PI / 2, 0, 0]} />
+      <line ref={lineRef}>
+        <bufferGeometry attach="geometry" />
+        <lineBasicMaterial attach="material" color="#f472b6" linewidth={3} />
+      </line>
+    </group>
+  );
+}
+
+function FunctionSurfaceModel() {
+  const meshRef = useRef();
+  
+  useFrame((state) => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y = state.clock.getElapsedTime() * 0.3;
+      meshRef.current.rotation.z = Math.sin(state.clock.getElapsedTime() * 0.5) * 0.2;
+    }
+  });
+
+  const geometry = useMemo(() => {
+    const geo = new THREE.PlaneGeometry(8, 8, 50, 50);
+    const pos = geo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const y = pos.getY(i);
+      const dist = Math.sqrt(x * x + y * y);
+      pos.setZ(i, Math.sin(dist) * 1.5);
+    }
+    geo.computeVertexNormals();
+    return geo;
+  }, []);
+
+  return (
+    <mesh ref={meshRef} geometry={geometry} rotation={[-Math.PI / 3, 0, 0]}>
+      <meshStandardMaterial color="#f472b6" wireframe />
+      <meshStandardMaterial color="#f472b6" transparent opacity={0.4} side={THREE.DoubleSide} />
     </mesh>
   );
 }
@@ -478,9 +642,16 @@ const modelData = {
     { id: "c10", name: "DNA Structure", category: "Biochemistry", Component: DNAHelixModel },
   ],
   maths: [
-    { id: "m1", name: "Dynamic Surface", category: "Calculus", Component: CalculusModel },
-    { id: "m2", name: "Vector Field", category: "Linear Algebra", Component: Torus },
-    { id: "m3", name: "Complex Manifold", category: "Advanced", Component: Sphere },
+    { id: "m1", name: "Cube", category: "Geometry", Component: CubeModel },
+    { id: "m2", name: "Sphere", category: "Geometry", Component: SphereModel },
+    { id: "m3", name: "Cone", category: "Geometry", Component: ConeModel },
+    { id: "m4", name: "Cylinder", category: "Geometry", Component: CylinderModel },
+    { id: "m5", name: "Pyramid", category: "Geometry", Component: PyramidModel },
+    { id: "m6", name: "Coordinate Plane", category: "Algebra", Component: CoordinatePlaneModel },
+    { id: "m7", name: "Vector Visualization", category: "Vectors", Component: VectorVisualizationModel },
+    { id: "m8", name: "Parabola Graph", category: "Algebra", Component: ParabolaGraphModel },
+    { id: "m9", name: "Sine Wave Graph", category: "Trigonometry", Component: SineWaveGraphModel },
+    { id: "m10", name: "3D Function Surface", category: "Calculus", Component: FunctionSurfaceModel },
   ],
 };
 
