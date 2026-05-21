@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { BarChart3, CheckCircle2, Clock, Flame, Loader2, Target, Trophy, Zap, Atom, Calculator, Cpu } from "lucide-react";
+import { BarChart3, CheckCircle2, Clock, Flame, Loader2, Target, Trophy, Zap, Atom, Calculator, Cpu, LayoutDashboard } from "lucide-react";
 import { useEffect, useMemo, useState, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import PageHeader from "../components/common/PageHeader";
 import { useAuth } from "../context/AuthContext";
 import { saveQuizAttempt } from "../services/firestore";
@@ -452,13 +452,22 @@ function Quiz() {
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setPhase("setup")}
-                className="premium-button mt-8 w-full rounded-2xl bg-gradient-to-br from-primary to-amber-300 px-6 py-3 font-black text-slate-950"
-              >
-                Generate Another Quiz
-              </button>
+              <div className="mt-8 flex flex-col sm:flex-row gap-4">
+                <button
+                  type="button"
+                  onClick={() => setPhase("setup")}
+                  className="premium-button flex-1 rounded-2xl bg-gradient-to-br from-primary to-amber-300 px-6 py-4 font-black text-slate-950 transition hover:-translate-y-0.5"
+                >
+                  Generate Another Quiz
+                </button>
+                <Link
+                  to="/dashboard"
+                  className="flex-1 flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-6 py-4 font-black text-white transition hover:bg-white/10 hover:border-white/20 active:scale-95"
+                >
+                  <LayoutDashboard size={19} />
+                  Check Your XP
+                </Link>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

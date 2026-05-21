@@ -1,5 +1,6 @@
 import HeroSection from "../components/home/HeroSection";
 import SubjectCards from "../components/home/SubjectCards";
+import FormulaeSection from "../components/home/FormulaeSection";
 import ChemistryVisualSection from "../components/home/ChemistryVisualSection";
 import ModelSection from "../components/home/ModelSection";
 import MathsVisualSection from "../components/home/MathsVisualSection";
@@ -16,6 +17,8 @@ function Home() {
           <div className="absolute inset-x-0 -top-24 h-48 bg-gradient-to-t from-slate-950 to-transparent pointer-events-none" />
           <SubjectCards />
         </div>
+
+        <FormulaeSection />
 
         <div className="relative">
           <div className="absolute inset-x-0 -top-24 h-48 bg-gradient-to-t from-slate-950 to-transparent pointer-events-none" />

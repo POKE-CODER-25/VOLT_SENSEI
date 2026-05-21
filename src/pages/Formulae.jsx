@@ -6,52 +6,52 @@ import { askVoltSensei } from "../services/groq";
 import { intelligentSearch } from "../services/search";
 
 const PHYSICS_FORMULAE = [
-  { id: "p1", name: "Newton's Second Law", formula: "F = ma", variables: "F: Force (N), m: Mass (kg), a: Acceleration (m/s²)", explanation: "The force acting on an object is equal to the mass of that object times its acceleration.", usage: "Used in Mechanics to calculate motion and forces.", relevance: "Fundamental for almost all JEE Mechanics problems." },
-  { id: "p2", name: "Coulomb's Law", formula: "F = k(q₁q₂/r²)", variables: "F: Force (N), k: Coulomb's constant, q: Charges (C), r: Distance (m)", explanation: "Calculates the electrostatic force of attraction or repulsion between two point charges.", usage: "Electrostatics, point charge interactions.", relevance: "High weightage in JEE Electrostatics section." },
-  { id: "p3", name: "Ohm's Law", formula: "V = IR", variables: "V: Voltage (V), I: Current (A), R: Resistance (Ω)", explanation: "The current through a conductor between two points is directly proportional to the voltage across the two points.", usage: "Circuit analysis, DC circuits.", relevance: "Base of Current Electricity topics in JEE." },
-  { id: "p4", name: "Kinetic Energy", formula: "K = ½mv²", variables: "K: Kinetic Energy (J), m: Mass (kg), v: Velocity (m/s)", explanation: "Energy possessed by an object due to its motion.", usage: "Work-Energy theorem, collisions.", relevance: "Essential for Work, Power & Energy unit." },
-  { id: "p5", name: "De Broglie Wavelength", formula: "λ = h/p", variables: "λ: Wavelength, h: Planck's constant, p: Momentum", explanation: "Relates the wave-like properties of matter to its momentum.", usage: "Modern Physics, Dual nature of matter.", relevance: "Critical for JEE Modern Physics questions." },
-  { id: "p6", name: "Einstein's Mass-Energy", formula: "E = mc²", variables: "E: Energy, m: Mass, c: Speed of light", explanation: "States that mass and energy are interchangeable.", usage: "Nuclear physics, binding energy.", relevance: "Conceptual base for Nuclear Physics." },
-  { id: "p7", name: "Universal Gravitation", formula: "F = G(m₁m₂/r²)", variables: "F: Gravitational Force, G: Gravitational Constant, m: Masses, r: Distance", explanation: "Attractive force between any two objects with mass.", usage: "Planetary motion, satellite mechanics.", relevance: "Key formula for Gravitation chapter." },
-  { id: "p8", name: "Bernoulli's Equation", formula: "P + ½ρv² + ρgh = constant", variables: "P: Pressure, ρ: Density, v: Velocity, g: gravity, h: height", explanation: "Conservation of energy principle for flowing fluids.", usage: "Fluid dynamics, lift in wings, venturi meter.", relevance: "Vital for JEE Fluid Mechanics." },
-  { id: "p9", name: "Centripetal Force", formula: "F = mv²/r", variables: "F: Force, m: Mass, v: Velocity, r: Radius", explanation: "Force required to keep an object moving in a curved path.", usage: "Circular motion, banking of roads.", relevance: "Frequent in Circular Motion and Rotational Dynamics." },
-  { id: "p10", name: "Lens Maker's Formula", formula: "1/f = (μ-1)(1/R₁ - 1/R₂)", variables: "f: Focal length, μ: Refractive index, R: Radii of curvature", explanation: "Relates focal length of a lens to its physical properties.", usage: "Ray optics, lens design.", relevance: "Core formula for Optics in JEE Advanced." },
-  { id: "p11", name: "Lorentz Force", formula: "F = q(E + v × B)", variables: "F: Force, q: Charge, E: Electric Field, v: Velocity, B: Magnetic Field", explanation: "Total force on a point charge due to electric and magnetic fields.", usage: "Electromagnetism, particle accelerators.", relevance: "Used in Magnetic Effects of Current." },
-  { id: "p12", name: "Capacitance", formula: "C = Q/V", variables: "C: Capacitance, Q: Charge, V: Potential difference", explanation: "Ratio of the change in electric charge of a system to the corresponding change in its electric potential.", usage: "Capacitors, energy storage.", relevance: "High weightage in JEE Main & Advanced." }
+  { id: "p1", name: "Newton's Second Law", formula: "F = ma", variables: "F: Force (N), m: Mass (kg), a: Acceleration (m/s²)", explanation: "The force acting on an object is equal to the mass of that object times its acceleration.", derivation: "Derived from the rate of change of momentum: F = dp/dt.", usage: "Used in Mechanics to calculate motion and forces.", relevance: "Fundamental for almost all JEE Mechanics problems.", trick: "Always draw a Free Body Diagram (FBD) before applying F=ma." },
+  { id: "p2", name: "Coulomb's Law", formula: "F = k(q₁q₂/r²)", variables: "F: Force (N), k: Coulomb's constant, q: Charges (C), r: Distance (m)", explanation: "Calculates the electrostatic force of attraction or repulsion between two point charges.", derivation: "Empirical law based on experimental observations by Charles-Augustin de Coulomb.", usage: "Electrostatics, point charge interactions.", relevance: "High weightage in JEE Electrostatics section.", trick: "Remember the inverse square law; doubling distance reduces force by 4x." },
+  { id: "p3", name: "Ohm's Law", formula: "V = IR", variables: "V: Voltage (V), I: Current (A), R: Resistance (Ω)", explanation: "The current through a conductor between two points is directly proportional to the voltage across the two points.", derivation: "Derived from the drift velocity of electrons in a conductor.", usage: "Circuit analysis, DC circuits.", relevance: "Base of Current Electricity topics in JEE.", trick: "V-I graph for ohmic conductors is a straight line passing through origin." },
+  { id: "p4", name: "Kinetic Energy", formula: "K = ½mv²", variables: "K: Kinetic Energy (J), m: Mass (kg), v: Velocity (m/s)", explanation: "Energy possessed by an object due to its motion.", derivation: "Derived from work-energy theorem: W = ∫ F dx.", usage: "Work-Energy theorem, collisions.", relevance: "Essential for Work, Power & Energy unit.", trick: "KE is always positive regardless of the direction of velocity." },
+  { id: "p5", name: "De Broglie Wavelength", formula: "λ = h/p", variables: "λ: Wavelength, h: Planck's constant, p: Momentum", explanation: "Relates the wave-like properties of matter to its momentum.", derivation: "Hypothesized by extending Einstein's relation E=pc to matter waves.", usage: "Modern Physics, Dual nature of matter.", relevance: "Critical for JEE Modern Physics questions.", trick: "For electrons, λ ≈ √(150/V) Å where V is the accelerating potential." },
+  { id: "p6", name: "Einstein's Mass-Energy", formula: "E = mc²", variables: "E: Energy, m: Mass, c: Speed of light", explanation: "States that mass and energy are interchangeable.", derivation: "Derived from the principles of Special Relativity.", usage: "Nuclear physics, binding energy.", relevance: "Conceptual base for Nuclear Physics.", trick: "1 amu of mass equals 931.5 MeV of energy." },
+  { id: "p7", name: "Universal Gravitation", formula: "F = G(m₁m₂/r²)", variables: "F: Gravitational Force, G: Gravitational Constant, m: Masses, r: Distance", explanation: "Attractive force between any two objects with mass.", derivation: "Newton's law based on Kepler's third law of planetary motion.", usage: "Planetary motion, satellite mechanics.", relevance: "Key formula for Gravitation chapter.", trick: "Gravitational force is independent of the medium between the masses." },
+  { id: "p8", name: "Bernoulli's Equation", formula: "P + ½ρv² + ρgh = constant", variables: "P: Pressure, ρ: Density, v: Velocity, g: gravity, h: height", explanation: "Conservation of energy principle for flowing fluids.", derivation: "Derived from work-energy theorem for ideal fluid flow.", usage: "Fluid dynamics, lift in wings, venturi meter.", relevance: "Vital for JEE Fluid Mechanics.", trick: "Valid only for incompressible, non-viscous, irrotational, steady flow." },
+  { id: "p9", name: "Centripetal Force", formula: "F = mv²/r", variables: "F: Force, m: Mass, v: Velocity, r: Radius", explanation: "Force required to keep an object moving in a curved path.", derivation: "Derived from centripetal acceleration a = v²/r.", usage: "Circular motion, banking of roads.", relevance: "Frequent in Circular Motion and Rotational Dynamics.", trick: "Centripetal force is not a 'new' force; it's provided by tension, friction, etc." },
+  { id: "p10", name: "Lens Maker's Formula", formula: "1/f = (μ-1)(1/R₁ - 1/R₂)", variables: "f: Focal length, μ: Refractive index, R: Radii of curvature", explanation: "Relates focal length of a lens to its physical properties.", derivation: "Derived using the refraction formula for two spherical surfaces.", usage: "Ray optics, lens design.", relevance: "Core formula for Optics in JEE Advanced.", trick: "Follow the Cartesian sign convention strictly for R₁ and R₂." },
+  { id: "p11", name: "Lorentz Force", formula: "F = q(E + v × B)", variables: "F: Force, q: Charge, E: Electric Field, v: Velocity, B: Magnetic Field", explanation: "Total force on a point charge due to electric and magnetic fields.", derivation: "Combined effect of electric (qE) and magnetic (qvB sinθ) forces.", usage: "Electromagnetism, particle accelerators.", relevance: "Used in Magnetic Effects of Current.", trick: "The magnetic part of the force does zero work as it's always perpendicular to velocity." },
+  { id: "p12", name: "Capacitance", formula: "C = Q/V", variables: "C: Capacitance, Q: Charge, V: Potential difference", explanation: "Ratio of the change in electric charge of a system to the corresponding change in its electric potential.", derivation: "Derived from the geometry of conductors and Gauss's Law.", usage: "Capacitors, energy storage.", relevance: "High weightage in JEE Main & Advanced.", trick: "Capacitance depends only on the geometry and the medium, not on Q or V." }
 ];
 
 const MATHS_FORMULAE = [
-  { id: "m1", name: "Quadratic Formula", formula: "x = [-b ± √(b² - 4ac)] / 2a", variables: "a, b, c: Coefficients of ax² + bx + c = 0", explanation: "Provides the roots of a quadratic equation. The discriminant (D = b² - 4ac) determines the nature of roots.", usage: "Finding zeros of functions, solving parabolic equations.", relevance: "Fundamental for Algebra and Coordinate Geometry in JEE.", graph: "Corresponds to the x-intercepts of the parabola y = ax² + bx + c." },
-  { id: "m2", name: "Euler's Identity", formula: "e^(iπ) + 1 = 0", variables: "e: Base of natural log, i: Imaginary unit, π: Pi", explanation: "Connects five fundamental mathematical constants in a single equation.", usage: "Complex numbers, rotation in the complex plane.", relevance: "Key for Complex Numbers and De Moivre's Theorem.", graph: "Represents a rotation of 180° on the unit circle in the Argand plane." },
-  { id: "m3", name: "Derivative of sin(x)", formula: "d/dx [sin(x)] = cos(x)", variables: "x: Angle in radians", explanation: "The rate of change of the sine function at any point is the value of the cosine function.", usage: "Calculus, finding slopes of trigonometric curves.", relevance: "Essential for JEE Differentiation and Integration chapters.", graph: "The slope of sin(x) at any point equals the y-value of cos(x) at that same point." },
-  { id: "m4", name: "Pythagorean Identity", formula: "sin²θ + cos²θ = 1", variables: "θ: Angle", explanation: "The most fundamental identity in trigonometry, derived from the unit circle.", usage: "Simplifying trig expressions, solving triangles.", relevance: "Must-know for Trigonometry and Calculus.", graph: "Defines the locus of a unit circle x² + y² = 1 where x=cosθ, y=sinθ." },
-  { id: "m5", name: "General Term of AP", formula: "aₙ = a + (n-1)d", variables: "a: First term, n: Term number, d: Common difference", explanation: "Calculates the value of any term in an Arithmetic Progression.", usage: "Sequences and Series analysis.", relevance: "Core of JEE Algebra section.", graph: "Points (n, aₙ) lie on a straight line with slope 'd'." },
-  { id: "m6", name: "Distance Formula", formula: "d = √[(x₂-x₁)² + (y₂-y₁)²]", variables: "x, y: Coordinates of two points", explanation: "Calculates the straight-line distance between two points in a 2D plane.", usage: "Coordinate geometry, finding lengths of segments.", relevance: "Used in almost every Coordinate Geometry problem.", graph: "The length of the hypotenuse of a right-angled triangle formed by the points." },
-  { id: "m7", name: "Product Rule", formula: "(uv)' = u'v + uv'", variables: "u, v: Differentiable functions of x", explanation: "Rule for differentiating the product of two functions.", usage: "Differential calculus.", relevance: "Basic building block for JEE Advanced Calculus.", graph: "Used to find slopes of curves defined by function products." },
-  { id: "m8", name: "Equation of a Circle", formula: "(x-h)² + (y-k)² = r²", variables: "(h,k): Center, r: Radius", explanation: "Standard form equation for a circle in the Cartesian plane.", usage: "Conic sections, geometry.", relevance: "High weightage in JEE Main/Advanced coordinate geometry.", graph: "The set of all points at distance 'r' from the fixed point (h,k)." },
-  { id: "m9", name: "Bayes' Theorem", formula: "P(A|B) = [P(B|A)P(A)] / P(B)", variables: "P(A|B): Conditional probability", explanation: "Relates the conditional and marginal probabilities of random events.", usage: "Probability and Statistics.", relevance: "Critical for high-level JEE Probability questions.", graph: "Often visualized using Tree Diagrams or Venn Diagrams." },
-  { id: "m10", name: "Integration of 1/x", formula: "∫ (1/x) dx = ln|x| + C", variables: "ln: Natural logarithm, C: Integration constant", explanation: "The integral of the reciprocal function results in a logarithmic function.", usage: "Integral calculus, area under hyperbola.", relevance: "Standard integral used across JEE Maths.", graph: "The area under the curve y=1/x from 1 to 'a' equals ln(a)." }
+  { id: "m1", name: "Quadratic Formula", formula: "x = [-b ± √(b² - 4ac)] / 2a", variables: "a, b, c: Coefficients of ax² + bx + c = 0", explanation: "Provides the roots of a quadratic equation. The discriminant (D = b² - 4ac) determines the nature of roots.", derivation: "Derived by completing the square on the general quadratic equation ax² + bx + c = 0.", usage: "Finding zeros of functions, solving parabolic equations.", relevance: "Fundamental for Algebra and Coordinate Geometry in JEE.", trick: "If a+b+c=0, the roots are always 1 and c/a.", graph: "Corresponds to the x-intercepts of the parabola y = ax² + bx + c." },
+  { id: "m2", name: "Euler's Identity", formula: "e^(iπ) + 1 = 0", variables: "e: Base of natural log, i: Imaginary unit, π: Pi", explanation: "Connects five fundamental mathematical constants in a single equation.", derivation: "A special case of Euler's formula e^(ix) = cos(x) + i sin(x) where x = π.", usage: "Complex numbers, rotation in the complex plane.", relevance: "Key for Complex Numbers and De Moivre's Theorem.", trick: "Use it to simplify expressions involving complex powers of 'e'.", graph: "Represents a rotation of 180° on the unit circle in the Argand plane." },
+  { id: "m3", name: "Derivative of sin(x)", formula: "d/dx [sin(x)] = cos(x)", variables: "x: Angle in radians", explanation: "The rate of change of the sine function at any point is the value of the cosine function.", derivation: "Derived using the first principle of derivatives: lim(h→0) [sin(x+h) - sin(x)] / h.", usage: "Calculus, finding slopes of trigonometric curves.", relevance: "Essential for JEE Differentiation and Integration chapters.", trick: "Derivative of 'co-' functions (cos, cot, cosec) always starts with a minus sign.", graph: "The slope of sin(x) at any point equals the y-value of cos(x) at that same point." },
+  { id: "m4", name: "Pythagorean Identity", formula: "sin²θ + cos²θ = 1", variables: "θ: Angle", explanation: "The most fundamental identity in trigonometry, derived from the unit circle.", derivation: "Derived from the Pythagorean theorem a² + b² = c² applied to a unit circle.", usage: "Simplifying trig expressions, solving triangles.", relevance: "Must-know for Trigonometry and Calculus.", trick: "Divide by cos²θ to get 1 + tan²θ = sec²θ.", graph: "Defines the locus of a unit circle x² + y² = 1 where x=cosθ, y=sinθ." },
+  { id: "m5", name: "General Term of AP", formula: "aₙ = a + (n-1)d", variables: "a: First term, n: Term number, d: Common difference", explanation: "Calculates the value of any term in an Arithmetic Progression.", derivation: "Derived by observing the pattern: a₁=a, a₂=a+d, a₃=a+2d...", usage: "Sequences and Series analysis.", relevance: "Core of JEE Algebra section.", trick: "If three terms are in AP, take them as (a-d), a, (a+d) to simplify calculations.", graph: "Points (n, aₙ) lie on a straight line with slope 'd'." },
+  { id: "m6", name: "Distance Formula", formula: "d = √[(x₂-x₁)² + (y₂-y₁)²]", variables: "x, y: Coordinates of two points", explanation: "Calculates the straight-line distance between two points in a 2D plane.", derivation: "A direct application of the Pythagorean theorem in the Cartesian plane.", usage: "Coordinate geometry, finding lengths of segments.", relevance: "Used in almost every Coordinate Geometry problem.", trick: "Always check if the distance is along an axis to avoid lengthy calculations.", graph: "The length of the hypotenuse of a right-angled triangle formed by the points." },
+  { id: "m7", name: "Product Rule", formula: "(uv)' = u'v + uv'", variables: "u, v: Differentiable functions of x", explanation: "Rule for differentiating the product of two functions.", derivation: "Derived from the limit definition of the derivative for the product f(x)g(x).", usage: "Differential calculus.", relevance: "Basic building block for JEE Advanced Calculus.", trick: "Think of it as: (1st derivative × 2nd) + (1st × 2nd derivative).", graph: "Used to find slopes of curves defined by function products." },
+  { id: "m8", name: "Equation of a Circle", formula: "(x-h)² + (y-k)² = r²", variables: "(h,k): Center, r: Radius", explanation: "Standard form equation for a circle in the Cartesian plane.", derivation: "Derived using the distance formula from the center (h,k) to any point (x,y) on the circle.", usage: "Conic sections, geometry.", relevance: "High weightage in JEE Main/Advanced coordinate geometry.", trick: "General form x² + y² + 2gx + 2fy + c = 0 has center (-g, -f) and radius √(g²+f²-c).", graph: "The set of all points at distance 'r' from the fixed point (h,k)." },
+  { id: "m9", name: "Bayes' Theorem", formula: "P(A|B) = [P(B|A)P(A)] / P(B)", variables: "P(A|B): Conditional probability", explanation: "Relates the conditional and marginal probabilities of random events.", derivation: "Derived from the definition of conditional probability: P(A∩B) = P(A|B)P(B) = P(B|A)P(A).", usage: "Probability and Statistics.", relevance: "Critical for high-level JEE Probability questions.", trick: "P(B) in the denominator is often calculated using the Theorem of Total Probability.", graph: "Often visualized using Tree Diagrams or Venn Diagrams." },
+  { id: "m10", name: "Integration of 1/x", formula: "∫ (1/x) dx = ln|x| + C", variables: "ln: Natural logarithm, C: Integration constant", explanation: "The integral of the reciprocal function results in a logarithmic function.", derivation: "Fundamental result that cannot be derived via the power rule x^n (since n=-1).", usage: "Integral calculus, area under hyperbola.", relevance: "Standard integral used across JEE Maths.", trick: "Don't forget the modulus sign |x| since log is only defined for positive values.", graph: "The area under the curve y=1/x from 1 to 'a' equals ln(a)." }
 ];
 
 const CHEMISTRY_FORMULAE = [
-  { id: "c1", name: "Ideal Gas Equation", formula: "PV = nRT", variables: "P: Pressure, V: Volume, n: Moles, R: Gas Constant, T: Temperature", explanation: "Describes the behavior of a hypothetical ideal gas under varying conditions.", usage: "Gaseous state, thermodynamics.", relevance: "High weightage in Physical Chemistry for JEE Main." },
-  { id: "c2", name: "Gibbs Free Energy", formula: "ΔG = ΔH - TΔS", variables: "ΔG: Gibbs Energy, ΔH: Enthalpy change, T: Temp (K), ΔS: Entropy change", explanation: "Determines the spontaneity of a chemical reaction at constant pressure and temperature.", usage: "Chemical thermodynamics, equilibrium.", relevance: "Crucial for predicting reaction direction in JEE Advanced." },
-  { id: "c3", name: "Nernst Equation", formula: "E = E° - (RT/nF) ln Q", variables: "E: Cell potential, E°: Standard potential, Q: Reaction quotient", explanation: "Relates the reduction potential of an electrochemical cell to the standard electrode potential.", usage: "Electrochemistry, calculating cell EMF.", relevance: "Extremely important for high-scoring Electrochemistry problems." },
-  { id: "c4", name: "Sodium Chloride", formula: "NaCl", variables: "Na⁺: Sodium ion, Cl⁻: Chloride ion", explanation: "An ionic compound forming a face-centered cubic lattice. Commonly known as table salt.", usage: "Solid state chemistry, electrochemistry.", relevance: "Classic example of ionic bonding and crystal lattices." },
-  { id: "c5", name: "Glucose", formula: "C₆H₁₂O₆", variables: "C: Carbon, H: Hydrogen, O: Oxygen", explanation: "A simple sugar that is an important energy source in living organisms.", usage: "Biochemistry, respiration.", relevance: "Fundamental biomolecule in JEE Organic Chemistry." },
-  { id: "c6", name: "Photosynthesis", formula: "6CO₂ + 6H₂O + light → C₆H₁₂O₆ + 6O₂", variables: "CO₂: Carbon dioxide, H₂O: Water, C₆H₁₂O₆: Glucose, O₂: Oxygen", explanation: "The process by which green plants use sunlight to synthesize nutrients from carbon dioxide and water.", usage: "Biochemistry, redox reactions.", relevance: "Important application of redox and biological chemistry." },
-  { id: "c7", name: "Haber Process", formula: "N₂ + 3H₂ ⇌ 2NH₃", variables: "N₂: Nitrogen, H₂: Hydrogen, NH₃: Ammonia", explanation: "Industrial production of ammonia using iron catalyst. High pressure and moderate temperature favor the yield.", usage: "Inorganic chemistry, chemical equilibrium.", relevance: "A classic example of Le Chatelier's principle in JEE." },
-  { id: "c8", name: "Acetic Acid", formula: "CH₃COOH", variables: "C: Carbon, H: Hydrogen, O: Oxygen", explanation: "A weak organic acid that gives vinegar its sour taste and pungent smell.", usage: "Organic synthesis, weak acids.", relevance: "Common weak acid used in ionic equilibrium problems." },
-  { id: "c9", name: "Benzene", formula: "C₆H₆", variables: "C: Carbon, H: Hydrogen", explanation: "An aromatic hydrocarbon consisting of a ring of six carbon atoms with alternating double bonds.", usage: "Organic chemistry, aromaticity.", relevance: "Core molecule in JEE Organic Chemistry." },
-  { id: "c10", name: "Sulfuric Acid", formula: "H₂SO₄", variables: "H: Hydrogen, S: Sulfur, O: Oxygen", explanation: "A strong mineral acid with highly corrosive properties, known as the 'king of chemicals'.", usage: "Contact process, dehydrating agent.", relevance: "Crucial reagent in organic and inorganic reactions." },
-  { id: "c11", name: "Methane", formula: "CH₄", variables: "C: Carbon, H: Hydrogen", explanation: "The simplest alkane and the main component of natural gas.", usage: "Fuel, organic synthesis.", relevance: "Basic building block in Organic Chemistry." },
-  { id: "c12", name: "Ammonia", formula: "NH₃", variables: "N: Nitrogen, H: Hydrogen", explanation: "A colorless gas with a characteristic pungent smell, widely used in fertilizers.", usage: "Fertilizers, cleaning agents.", relevance: "Key molecule in p-block elements study." },
-  { id: "c13", name: "Hydrochloric Acid", formula: "HCl", variables: "H: Hydrogen, Cl: Chlorine", explanation: "A strong, highly corrosive acid used in laboratories and industry.", usage: "Acid-base titrations, pickling of steel.", relevance: "Primary strong acid for pH calculations." },
-  { id: "c14", name: "Sodium Hydroxide", formula: "NaOH", variables: "Na: Sodium, O: Oxygen, H: Hydrogen", explanation: "A strong base also known as lye or caustic soda.", usage: "Soap making, paper industry.", relevance: "Primary strong base for JEE Ionic Equilibrium." },
-  { id: "c15", name: "Water", formula: "H₂O", variables: "H: Hydrogen, O: Oxygen", explanation: "The universal solvent, essential for all known forms of life.", usage: "Solvent, coolant.", relevance: "Hydrogen bonding and anomalous properties are JEE favorites." },
-  { id: "c16", name: "Rusting of Iron", formula: "4Fe + 3O₂ + 6H₂O → 4Fe(OH)₃", variables: "Fe: Iron, O₂: Oxygen, H₂O: Water", explanation: "The slow oxidation of iron in the presence of air and moisture.", usage: "Corrosion studies.", relevance: "Important redox process in Electrochemistry." },
-  { id: "c17", name: "Neutralization", formula: "H⁺ + OH⁻ → H₂O", variables: "H⁺: Hydrogen ion, OH⁻: Hydroxide ion", explanation: "The reaction between an acid and a base to produce water and a salt.", usage: "Titrations.", relevance: "Foundation of Acid-Base chemistry." },
-  { id: "c18", name: "Ethanol", formula: "C₂H₅OH", variables: "C: Carbon, H: Hydrogen, O: Oxygen", explanation: "A clear, colorless liquid and the principle alcohol in alcoholic beverages.", usage: "Solvent, fuel.", relevance: "Important functional group in Organic Chemistry." }
+  { id: "c1", name: "Ideal Gas Equation", formula: "PV = nRT", variables: "P: Pressure, V: Volume, n: Moles, R: Gas Constant, T: Temperature", explanation: "Describes the behavior of a hypothetical ideal gas under varying conditions.", derivation: "Combination of Boyle's, Charles's, and Avogadro's laws.", usage: "Gaseous state, thermodynamics.", relevance: "High weightage in Physical Chemistry for JEE Main.", trick: "Use R = 0.0821 L·atm/(mol·K) for volume in liters and pressure in atm." },
+  { id: "c2", name: "Gibbs Free Energy", formula: "ΔG = ΔH - TΔS", variables: "ΔG: Gibbs Energy, ΔH: Enthalpy change, T: Temp (K), ΔS: Entropy change", explanation: "Determines the spontaneity of a chemical reaction at constant pressure and temperature.", derivation: "Derived from the second law of thermodynamics (ΔS_total = ΔS_sys + ΔS_surr).", usage: "Chemical thermodynamics, equilibrium.", relevance: "Crucial for predicting reaction direction in JEE Advanced.", trick: "ΔG < 0 means spontaneous; ΔG > 0 means non-spontaneous." },
+  { id: "c3", name: "Nernst Equation", formula: "E = E° - (RT/nF) ln Q", variables: "E: Cell potential, E°: Standard potential, Q: Reaction quotient", explanation: "Relates the reduction potential of an electrochemical cell to the standard electrode potential.", derivation: "Derived from ΔG = ΔG° + RT ln Q and ΔG = -nFE.", usage: "Electrochemistry, calculating cell EMF.", relevance: "Extremely important for high-scoring Electrochemistry problems.", trick: "At 298K, E = E° - (0.0591/n) log Q is the most common form used in JEE." },
+  { id: "c4", name: "Sodium Chloride", formula: "NaCl", variables: "Na⁺: Sodium ion, Cl⁻: Chloride ion", explanation: "An ionic compound forming a face-centered cubic lattice. Commonly known as table salt.", derivation: "Formation via ionic bonding between Sodium (metal) and Chlorine (non-metal).", usage: "Solid state chemistry, electrochemistry.", relevance: "Classic example of ionic bonding and crystal lattices.", trick: "Coordination number is 6:6; each Na⁺ is surrounded by 6 Cl⁻." },
+  { id: "c5", name: "Glucose", formula: "C₆H₁₂O₆", variables: "C: Carbon, H: Hydrogen, O: Oxygen", explanation: "A simple sugar that is an important energy source in living organisms.", derivation: "Produced in plants via photosynthesis using solar energy.", usage: "Biochemistry, respiration.", relevance: "Fundamental biomolecule in JEE Organic Chemistry.", trick: "Exists as an equilibrium mixture of open-chain and cyclic (pyranose) forms." },
+  { id: "c6", name: "Photosynthesis", formula: "6CO₂ + 6H₂O + light → C₆H₁₂O₆ + 6O₂", variables: "CO₂: Carbon dioxide, H₂O: Water, C₆H₁₂O₆: Glucose, O₂: Oxygen", explanation: "The process by which green plants use sunlight to synthesize nutrients from carbon dioxide and water.", derivation: "A complex multi-stage redox reaction occurring in chloroplasts.", usage: "Biochemistry, redox reactions.", relevance: "Important application of redox and biological chemistry.", trick: "Water is oxidized to Oxygen; CO₂ is reduced to Glucose." },
+  { id: "c7", name: "Haber Process", formula: "N₂ + 3H₂ ⇌ 2NH₃", variables: "N₂: Nitrogen, H₂: Hydrogen, NH₃: Ammonia", explanation: "Industrial production of ammonia using iron catalyst. High pressure and moderate temperature favor the yield.", derivation: "Based on Le Chatelier's Principle for exothermic gas-phase reactions.", usage: "Inorganic chemistry, chemical equilibrium.", relevance: "A classic example of Le Chatelier's principle in JEE.", trick: "High pressure (~200 atm) shifts the equilibrium to the side with fewer gas moles (Ammonia)." },
+  { id: "c8", name: "Acetic Acid", formula: "CH₃COOH", variables: "C: Carbon, H: Hydrogen, O: Oxygen", explanation: "A weak organic acid that gives vinegar its sour taste and pungent smell.", derivation: "Derived from oxidation of ethanol or methanol carbonylation.", usage: "Organic synthesis, weak acids.", relevance: "Common weak acid used in ionic equilibrium problems.", trick: "Glacial acetic acid is anhydrous; it forms ice-like crystals at 16.6°C." },
+  { id: "c9", name: "Benzene", formula: "C₆H₆", variables: "C: Carbon, H: Hydrogen", explanation: "An aromatic hydrocarbon consisting of a ring of six carbon atoms with alternating double bonds.", derivation: "Derived from coal tar or petroleum reforming; follows Kekulé structure.", usage: "Organic chemistry, aromaticity.", relevance: "Core molecule in JEE Organic Chemistry.", trick: "Hückel's Rule (4n+2 π electrons) explains its exceptional stability." },
+  { id: "c10", name: "Sulfuric Acid", formula: "H₂SO₄", variables: "H: Hydrogen, S: Sulfur, O: Oxygen", explanation: "A strong mineral acid with highly corrosive properties, known as the 'king of chemicals'.", derivation: "Produced industrially via the Contact Process (oxidation of SO₂ to SO₃).", usage: "Contact process, dehydrating agent.", relevance: "Crucial reagent in organic and inorganic reactions.", trick: "It is a powerful dehydrating agent; it can char sugar by removing water." },
+  { id: "c11", name: "Methane", formula: "CH₄", variables: "C: Carbon, H: Hydrogen", explanation: "The simplest alkane and the main component of natural gas.", derivation: "Formed by anaerobic decomposition of organic matter.", usage: "Fuel, organic synthesis.", relevance: "Basic building block in Organic Chemistry.", trick: "Has a tetrahedral geometry with bond angle of 109.5°." },
+  { id: "c12", name: "Ammonia", formula: "NH₃", variables: "N: Nitrogen, H: Hydrogen", explanation: "A colorless gas with a characteristic pungent smell, widely used in fertilizers.", derivation: "Formed via the Haber Process; has a trigonal pyramidal shape.", usage: "Fertilizers, cleaning agents.", relevance: "Key molecule in p-block elements study.", trick: "Acting as a Lewis base due to the lone pair on Nitrogen." },
+  { id: "c13", name: "Hydrochloric Acid", formula: "HCl", variables: "H: Hydrogen, Cl: Chlorine", explanation: "A strong, highly corrosive acid used in laboratories and industry.", derivation: "Prepared by dissolving hydrogen chloride gas in water.", usage: "Acid-base titrations, pickling of steel.", relevance: "Primary strong acid for pH calculations.", trick: "Azeotropic mixture with water at 20.2% concentration." },
+  { id: "c14", name: "Sodium Hydroxide", formula: "NaOH", variables: "Na: Sodium, O: Oxygen, H: Hydrogen", explanation: "A strong base also known as lye or caustic soda.", derivation: "Produced via the Castner-Kellner or Nelson cell electrolysis of brine.", usage: "Soap making, paper industry.", relevance: "Primary strong base for JEE Ionic Equilibrium.", trick: "Deliquescent solid; it absorbs moisture and CO₂ from the air." },
+  { id: "c15", name: "Water", formula: "H₂O", variables: "H: Hydrogen, O: Oxygen", explanation: "The universal solvent, essential for all known forms of life.", derivation: "Formed by combustion of hydrogen or neutralization reactions.", usage: "Solvent, coolant.", relevance: "Hydrogen bonding and anomalous properties are JEE favorites.", trick: "Maximum density occurs at 4°C due to hydrogen bonding." },
+  { id: "c16", name: "Rusting of Iron", formula: "4Fe + 3O₂ + 6H₂O → 4Fe(OH)₃", variables: "Fe: Iron, O₂: Oxygen, H₂O: Water", explanation: "The slow oxidation of iron in the presence of air and moisture.", derivation: "An electrochemical process involving anodic and cathodic sites on the metal surface.", usage: "Corrosion studies.", relevance: "Important redox process in Electrochemistry.", trick: "Presence of electrolytes (like NaCl) accelerates the rusting process." },
+  { id: "c17", name: "Neutralization", formula: "H⁺ + OH⁻ → H₂O", variables: "H⁺: Hydrogen ion, OH⁻: Hydroxide ion", explanation: "The reaction between an acid and a base to produce water and a salt.", derivation: "Based on the Arrhenius or Brønsted-Lowry acid-base theory.", usage: "Titrations.", relevance: "Foundation of Acid-Base chemistry.", trick: "Enthalpy of neutralization for strong acid-strong base is always -57.3 kJ/mol." },
+  { id: "c18", name: "Ethanol", formula: "C₂H₅OH", variables: "C: Carbon, H: Hydrogen, O: Oxygen", explanation: "A clear, colorless liquid and the principle alcohol in alcoholic beverages.", derivation: "Produced by fermentation of sugars or hydration of ethene.", usage: "Solvent, fuel.", relevance: "Important functional group in Organic Chemistry.", trick: "Forms hydrogen bonds, leading to a higher boiling point than isomeric dimethyl ether." }
 ];
 
 const ELEMENT_CATEGORIES = {
@@ -334,29 +334,51 @@ function Formulae() {
 
     try {
       let subjectPrompt = "";
+      let visualPrompt = "";
+      
       if (activeSubject === "physics") {
-        subjectPrompt = "Focus on the physical law, formula, and a clear breakdown of variables/units.";
+        subjectPrompt = "Focus on the physical law, formula, and a clear breakdown of variables/units with SI units.";
+        visualPrompt = "visualUnderstanding: Connect formula to motion/concept";
       } else if (activeSubject === "maths") {
-        subjectPrompt = "Focus on the equation and its geometric/graphical significance (e.g., what the slope or area represents).";
+        subjectPrompt = "Focus on the equation, its geometric significance, and any specific conditions (like domain/range).";
+        visualPrompt = "visualUnderstanding: Connect equation to graph/geometry";
       } else if (activeSubject === "chemistry") {
-        subjectPrompt = "Focus on the molecular formula or chemical reaction equation. Explain the structure or stoichiometry.";
+        subjectPrompt = "Focus on the molecular formula or chemical reaction equation. Explain the structure, bonding, or stoichiometry.";
+        visualPrompt = "visualUnderstanding: Connect formula to reaction/molecule";
       }
 
-      const prompt = `You are an elite JEE mentor. Generate a detailed educational JSON for the ${activeSubject} query: "${searchQuery}". 
+      const prompt = `You are an elite JEE mentor. Generate a detailed educational JSON for the ${activeSubject} topic: "${searchQuery}". 
       ${subjectPrompt}
+      Include these EXACT fields for the best teaching experience:
+      - name: Full Name of the concept
+      - formula: The main formula/equation/reaction (use standard text notation)
+      - stepByStep: Step-by-step logical explanation of the formula
+      - variables: Clear breakdown of variable meanings (comma-separated, format like 'v: Velocity, t: Time')
+      - practicalMeaning: The real-world or practical meaning of the formula
+      - ${visualPrompt}
+      - trick: An easy memory trick or mnemonic
+      - jeeExplanation: A JEE-style explanation focusing on exam relevance and common questions
+      
       Response format:
       {
-        "name": "Full Name",
-        "formula": "The main formula/equation/reaction",
-        "detailTitle": "${activeSubject === 'physics' ? 'Variables' : activeSubject === 'maths' ? 'Graph Meaning' : 'Molecular Structure'}",
-        "detailContent": "Detailed breakdown related to the title",
-        "explanation": "Simple 1-2 sentence core concept",
-        "usage": "Where it is applied in JEE",
-        "relevance": "JEE exam importance and tips"
+        "name": "...",
+        "formula": "...",
+        "stepByStep": "...",
+        "variables": "...",
+        "practicalMeaning": "...",
+        "visualUnderstanding": "...",
+        "trick": "...",
+        "jeeExplanation": "..."
       }
-      ONLY return JSON.`;
+      ONLY return raw JSON. No markdown. No preamble.`;
 
-      const response = await askVoltSensei(prompt);
+      const response = await askVoltSensei([
+        {
+          role: "student",
+          text: prompt
+        }
+      ], activeSubject, { max_tokens: 1500, temperature: 0.7 });
+
       const cleanJson = response.replace(/```json|```/g, "").trim();
       const data = JSON.parse(cleanJson);
       
@@ -590,25 +612,21 @@ function DetailChip({ label, value, color = "text-white" }) {
 }
 
 function FormulaCard({ formula, theme, border, subject }) {
-  const isAi = formula.isAi;
-  
-  // Logic for detail title and content
-  let detailTitle = "Variables";
-  let detailContent = formula.variables;
-
-  if (isAi && formula.detailTitle) {
-    detailTitle = formula.detailTitle;
-    detailContent = formula.detailContent;
-  } else {
-    // Default fallback for subject-specific local data
-    if (subject === "maths" || formula.graph) {
-      detailTitle = "Graph Meaning";
-      detailContent = formula.graph || formula.variables;
-    } else if (subject === "chemistry") {
-      detailTitle = "Molecular Structure";
-      detailContent = formula.variables;
-    }
-  }
+  // Variables processing for highlighting
+  const renderVariables = (text) => {
+    if (!text) return null;
+    return text.split(',').map((v, i) => {
+      const parts = v.split(':');
+      if (parts.length < 2) return <span key={i} className="block mb-1">{v.trim()}</span>;
+      const key = parts[0];
+      const rest = parts.slice(1).join(':');
+      return (
+        <span key={i} className="block mb-1">
+          <span className={`font-black ${theme}`}>{key.trim()}</span>: {rest.trim()}
+        </span>
+      );
+    });
+  };
 
   return (
     <motion.div
@@ -619,39 +637,69 @@ function FormulaCard({ formula, theme, border, subject }) {
     >
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-black text-white group-hover:text-electric transition-colors line-clamp-1">{formula.name}</h3>
-        {isAi && <div className="rounded-full bg-electric/20 px-2 py-0.5 text-[8px] font-black text-electric ring-1 ring-electric/30">AI</div>}
+        {formula.isAi && <div className="rounded-full bg-electric/20 px-2 py-0.5 text-[8px] font-black text-electric ring-1 ring-electric/30">AI</div>}
       </div>
 
       <div className="mb-6 rounded-2xl bg-black/40 p-5 text-center border border-white/5 shadow-inner min-h-[100px] flex items-center justify-center">
         <p className={`text-xl md:text-2xl font-black tracking-wider ${theme} break-words line-clamp-2`}>{formula.formula}</p>
       </div>
 
-      <div className="space-y-4 flex-1">
+      <div className="space-y-5 flex-1">
+        {/* Step-by-Step Explanation */}
         <div>
           <p className="text-[9px] font-black uppercase text-slate-500 tracking-widest mb-1 flex items-center gap-1.5">
-            <Info size={10} /> {detailTitle}
+            <Info size={10} /> Step-by-Step Logic
           </p>
-          <p className="text-xs font-medium text-slate-300 leading-relaxed line-clamp-3">{detailContent}</p>
+          <p className="text-xs font-medium text-slate-300 leading-relaxed">{formula.stepByStep || formula.explanation}</p>
         </div>
 
-        <div>
-          <p className="text-[9px] font-black uppercase text-slate-500 tracking-widest mb-1">Explanation</p>
-          <p className="text-xs font-medium text-slate-400 leading-relaxed line-clamp-3">{formula.explanation}</p>
+        {/* Highlighted Variables */}
+        <div className="rounded-xl bg-black/20 p-3 border border-white/5">
+          <p className="text-[9px] font-black uppercase text-slate-500 tracking-widest mb-2">Variable Breakdown</p>
+          <div className="text-[11px] font-medium text-slate-300">
+            {renderVariables(formula.variables)}
+          </div>
         </div>
+
+        {/* Visual Understanding */}
+        {(formula.visualUnderstanding || formula.graph || formula.usage) && (
+          <div>
+            <p className="text-[9px] font-black uppercase text-slate-500 tracking-widest mb-1 flex items-center gap-1.5">
+              <BookOpen size={10} /> Visual Understanding
+            </p>
+            <p className="text-xs font-medium text-slate-400 leading-relaxed">{formula.visualUnderstanding || formula.graph || formula.usage}</p>
+          </div>
+        )}
+
+        {/* Practical Meaning & Derivation */}
+        {(formula.practicalMeaning || formula.derivation) && (
+          <div>
+            <p className="text-[9px] font-black uppercase text-slate-500 tracking-widest mb-1">Practical Meaning</p>
+            <p className="text-xs font-medium text-slate-400 leading-relaxed">{formula.practicalMeaning || formula.derivation}</p>
+          </div>
+        )}
+
+        {/* Easy Memory Trick */}
+        {formula.trick && (
+          <div className="rounded-xl bg-electric/5 border border-electric/10 p-3 mt-4">
+            <p className="text-[9px] font-black uppercase text-electric tracking-widest mb-1 flex items-center gap-1.5">
+              <Sparkles size={10} /> Memory Trick
+            </p>
+            <p className="text-[11px] font-bold text-slate-200 leading-relaxed italic">"{formula.trick}"</p>
+          </div>
+        )}
       </div>
 
-      <div className="pt-4 border-t border-white/5 mt-6 space-y-3">
+      {/* JEE-Style Explanation / Relevance */}
+      <div className="pt-5 border-t border-white/5 mt-6 space-y-3 bg-black/20 -mx-6 -mb-6 p-6 rounded-b-[2rem]">
         <div className="flex items-start gap-3">
-           <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-slate-700 shrink-0" />
-           <p className="text-[11px] font-bold text-slate-400 leading-tight">
-             <span className="text-white">Usage:</span> {formula.usage}
-           </p>
-        </div>
-        <div className="flex items-start gap-3">
-           <div className={`mt-1.5 h-1.5 w-1.5 rounded-full bg-current ${theme} shrink-0`} />
-           <p className="text-[11px] font-bold text-slate-400 leading-tight">
-             <span className="text-white uppercase text-[9px] tracking-widest">JEE Relevance:</span> {formula.relevance}
-           </p>
+           <div className={`mt-1 h-2 w-2 rounded-full bg-current ${theme} shrink-0 shadow-[0_0_10px_currentColor]`} />
+           <div>
+             <p className="text-[9px] font-black uppercase tracking-widest text-white mb-1">JEE-Style Context</p>
+             <p className="text-xs font-bold text-slate-400 leading-relaxed">
+               {formula.jeeExplanation || formula.relevance}
+             </p>
+           </div>
         </div>
       </div>
     </motion.div>
