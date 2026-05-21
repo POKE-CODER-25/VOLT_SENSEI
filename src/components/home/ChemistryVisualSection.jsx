@@ -103,49 +103,74 @@ function MolecularNetwork() {
 
 function ChemistryVisualSection() {
   return (
-    <section className="relative h-[650px] w-full overflow-hidden bg-slate-950 px-4 py-24 md:px-8">
-      <div className="absolute inset-0 z-0 opacity-40">
-        <Canvas>
-          <PerspectiveCamera makeDefault position={[0, 0, 10]} fov={50} />
-          <ambientLight intensity={0.2} />
-          <pointLight position={[10, 10, 10]} intensity={1} />
-          <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
-          <MolecularNetwork />
-        </Canvas>
-      </div>
-
-      <div className="relative z-10 mx-auto flex h-full max-w-7xl flex-col items-center justify-center text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-          className="max-w-4xl"
-        >
-          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400 mb-6">Molecular Engineering</p>
-          <h2 className="text-5xl font-black text-white md:text-7xl lg:text-8xl tracking-tighter">
-            Next-Gen <span className="text-emerald-400 glow-text-strong">Chemistry</span>
-          </h2>
-          <p className="mt-8 text-lg font-medium leading-relaxed text-slate-400 max-w-2xl mx-auto">
-            Interact with live molecular simulations. Our proprietary engine renders covalent bonds and reaction pathways with atomic precision.
-          </p>
+    <section className="relative w-full overflow-hidden bg-slate-950 px-4 py-24 md:px-8">
+      <div className="mx-auto max-w-7xl">
+        <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
           
-          <div className="mt-12 flex flex-wrap justify-center gap-4">
-             <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.03] px-8 py-4 backdrop-blur-3xl shadow-2xl">
-                <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-[11px] font-black text-slate-300 uppercase tracking-[0.2em]">Covalent Intelligence</span>
-             </div>
-             <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.03] px-8 py-4 backdrop-blur-3xl shadow-2xl">
-                <div className="h-2 w-2 rounded-full bg-teal-400 animate-pulse" />
-                <span className="text-[11px] font-black text-slate-300 uppercase tracking-[0.2em]">Orbital Mapping</span>
-             </div>
-          </div>
-        </motion.div>
+          {/* Content Area */}
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="flex-1 text-center lg:text-left z-10"
+          >
+            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400 mb-6">Molecular Engineering</p>
+            <h2 className="text-5xl font-black text-white md:text-7xl tracking-tighter leading-[0.9]">
+              Next-Gen <br />
+              <span className="text-emerald-400 glow-text-strong">Chemistry</span>
+            </h2>
+            <p className="mt-8 text-lg font-medium leading-relaxed text-slate-400 max-w-xl mx-auto lg:mx-0">
+              Interact with live molecular simulations. Our proprietary engine renders covalent bonds and reaction pathways with atomic precision.
+            </p>
+            
+            <div className="mt-12 flex flex-wrap justify-center lg:justify-start gap-4">
+               <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.03] px-8 py-4 backdrop-blur-3xl shadow-2xl">
+                  <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-[11px] font-black text-slate-300 uppercase tracking-[0.2em]">Covalent Intelligence</span>
+               </div>
+               <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.03] px-8 py-4 backdrop-blur-3xl shadow-2xl">
+                  <div className="h-2 w-2 rounded-full bg-teal-400 animate-pulse" />
+                  <span className="text-[11px] font-black text-slate-300 uppercase tracking-[0.2em]">Orbital Mapping</span>
+               </div>
+            </div>
+          </motion.div>
+
+          {/* Simulation Box */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="flex-1 w-full aspect-square max-w-[500px] relative group"
+          >
+            <div className="absolute -inset-4 bg-emerald-500/10 blur-[60px] rounded-full group-hover:bg-emerald-500/20 transition-all duration-700" />
+            <div className="relative h-full w-full rounded-[3rem] border border-white/10 bg-slate-900/40 backdrop-blur-3xl overflow-hidden shadow-2xl ring-1 ring-white/5">
+              <Canvas>
+                <PerspectiveCamera makeDefault position={[0, 0, 8]} fov={50} />
+                <ambientLight intensity={0.2} />
+                <pointLight position={[10, 10, 10]} intensity={1} />
+                <Stars radius={100} depth={50} count={2000} factor={4} saturation={0} fade speed={1} />
+                <MolecularNetwork />
+              </Canvas>
+              
+              {/* Overlay HUD */}
+              <div className="absolute top-6 left-6 flex flex-col gap-1">
+                <div className="h-1 w-12 bg-emerald-500/50 rounded-full" />
+                <div className="h-1 w-8 bg-emerald-500/30 rounded-full" />
+              </div>
+              <div className="absolute bottom-6 right-6 text-[8px] font-black text-emerald-500/50 uppercase tracking-widest">
+                Active Simulation_Chem.01
+              </div>
+            </div>
+          </motion.div>
+
+        </div>
       </div>
 
-      {/* Decorative gradient overlay */}
-      <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent" />
-      <div className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-slate-950 via-slate-950/80 to-transparent" />
+      {/* Aesthetic Overlays */}
+      <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent pointer-events-none" />
+      <div className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-slate-950 via-slate-950/80 to-transparent pointer-events-none" />
     </section>
   );
 }

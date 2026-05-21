@@ -319,7 +319,7 @@ function Learn() {
   };
 
   return (
-    <div className={`flex h-full bg-slate-950 text-white overflow-hidden ${isFullscreen ? "fixed inset-0 z-[100]" : "relative"}`}>
+    <div className={`flex bg-slate-950 text-white overflow-hidden ${isFullscreen ? "fixed inset-0 z-[100]" : "absolute inset-0 top-[0px]"}`}>
       {/* Sidebar Overlay for Mobile */}
       <AnimatePresence>
         {isSidebarOpen && (
@@ -328,14 +328,14 @@ function Learn() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsSidebarOpen(false)}
-            className="absolute inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+            className="absolute inset-0 z-[60] bg-black/60 backdrop-blur-sm lg:hidden"
           />
         )}
       </AnimatePresence>
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-[80%] max-w-72 border-r border-white/10 flex flex-col bg-slate-900/90 backdrop-blur-xl shrink-0 transition-transform duration-300 lg:relative lg:translate-x-0 lg:z-0 lg:w-80 lg:bg-slate-900/50 ${
+        className={`fixed inset-y-0 left-0 z-[70] w-[80%] max-w-72 border-r border-white/10 flex flex-col bg-slate-900/95 backdrop-blur-xl shrink-0 transition-transform duration-300 lg:relative lg:translate-x-0 lg:z-10 lg:w-80 lg:bg-slate-900/50 ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -343,7 +343,7 @@ function Learn() {
           <button
             onClick={startNewChat}
             disabled={isThinking}
-            className={`flex-1 py-3 px-4 rounded-xl border border-dashed ${config.border} flex items-center gap-2 font-black transition hover:bg-white/5 disabled:opacity-50`}
+            className={`flex-1 py-3 px-4 rounded-xl border border-dashed ${config.border} flex items-center gap-2 font-black transition hover:bg-white/5 disabled:opacity-50 text-xs md:text-sm`}
           >
             <Plus size={18} /> New Chat
           </button>
@@ -356,12 +356,12 @@ function Learn() {
         </div>
 
         <div className="p-4 relative">
-          <Search className="absolute left-7 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+          <Search className="absolute left-7 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search chats..."
-            className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-current/30 text-sm"
+            className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-current/30 text-xs"
           />
         </div>
 
@@ -381,19 +381,19 @@ function Learn() {
                 currentSessionId === session.id ? "bg-white/10 ring-1 ring-white/20" : "hover:bg-white/5"
               } ${isThinking ? "opacity-50 cursor-not-allowed" : ""}`}
             >
-              <div className={`p-2 rounded-lg ${currentSessionId === session.id ? config.bg : "bg-white/5"}`}>
-                <MessageSquare size={16} className={currentSessionId === session.id ? config.theme : "text-slate-400"} />
+              <div className={`p-2 rounded-lg shrink-0 ${currentSessionId === session.id ? config.bg : "bg-white/5"}`}>
+                <MessageSquare size={14} className={currentSessionId === session.id ? config.theme : "text-slate-400"} />
               </div>
               <div className="flex-1 text-left overflow-hidden">
-                <div className="text-sm font-bold truncate">{session.title}</div>
-                <div className="text-[11px] text-slate-500 truncate">{session.lastMessage || "No messages yet"}</div>
+                <div className="text-xs font-bold truncate">{session.title}</div>
+                <div className="text-[10px] text-slate-500 truncate">{session.lastMessage || "No messages yet"}</div>
               </div>
               <button
                 onClick={(e) => deleteSession(session.id, e)}
                 disabled={isThinking}
-                className="opacity-0 group-hover:opacity-100 p-1 hover:text-rose-500 transition disabled:hidden"
+                className="opacity-0 lg:group-hover:opacity-100 p-1 hover:text-rose-500 transition disabled:hidden shrink-0"
               >
-                <Trash2 size={14} />
+                <Trash2 size={12} />
               </button>
             </button>
           ))}
@@ -401,20 +401,20 @@ function Learn() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col relative min-w-0">
+      <main className="flex-1 flex flex-col relative min-w-0 h-full overflow-hidden">
         <config.Visuals />
         
         {/* Top Bar */}
-        <header className="h-16 border-b border-white/10 flex items-center justify-between px-4 md:px-6 bg-slate-950/50 backdrop-blur-md z-10 shrink-0">
+        <header className="h-16 border-b border-white/10 flex items-center justify-between px-4 md:px-6 bg-slate-950/80 backdrop-blur-md z-20 shrink-0">
           <div className="flex items-center gap-2 md:gap-3">
             <button
               onClick={() => setIsSidebarOpen(true)}
               className="p-2 -ml-2 rounded-lg hover:bg-white/5 transition text-slate-400 lg:hidden"
             >
-              <MessageSquare size={20} />
+              <Menu size={20} />
             </button>
             <config.icon className={config.theme} size={20} />
-            <h1 className="text-lg md:text-xl font-black truncate">{config.title}</h1>
+            <h1 className="text-sm md:text-lg font-black truncate max-w-[150px] sm:max-w-none">{config.title}</h1>
           </div>
           <button
             onClick={() => setIsFullscreen(!isFullscreen)}
@@ -425,79 +425,81 @@ function Learn() {
         </header>
 
         {/* Chat Messages */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 md:space-y-6 custom-scrollbar pb-32">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 md:space-y-8 custom-scrollbar pb-40 scroll-smooth">
           {messages.map((msg) => (
             <motion.div
               key={msg.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className={`flex gap-3 md:gap-4 ${msg.role === "student" ? "flex-row-reverse" : ""} ${msg.isStreaming && !msg.text ? "hidden" : ""}`}
+              className={`flex gap-3 md:gap-5 ${msg.role === "student" ? "flex-row-reverse" : ""} ${msg.isStreaming && !msg.text ? "hidden" : ""}`}
             >
-              <div className={`w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl shrink-0 flex items-center justify-center ${
-                msg.role === "student" ? "bg-white/10" : config.bg
+              <div className={`w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl shrink-0 flex items-center justify-center shadow-lg ${
+                msg.role === "student" ? "bg-white/10" : `${config.bg} border ${config.border}`
               }`}>
-                {msg.role === "student" ? <UserRound size={16} className="md:w-5 md:h-5" /> : <config.icon className={config.theme} size={16} className="md:w-5 md:h-5" />}
+                {msg.role === "student" ? <UserRound size={16} className="md:w-5 md:h-5 text-white" /> : <config.icon className={config.theme} size={16} className="md:w-5 md:h-5" />}
               </div>
-              <div className={`max-w-[85%] md:max-w-[80%] space-y-2 ${msg.role === "student" ? "text-right" : ""}`}>
-                <div className={`inline-block p-3 md:p-4 rounded-xl md:rounded-2xl border text-[13px] md:text-sm leading-relaxed ${
+              <div className={`max-w-[90%] md:max-w-[75%] space-y-2 ${msg.role === "student" ? "items-end" : ""}`}>
+                <div className={`p-4 md:p-5 rounded-2xl border text-[13px] md:text-[15px] leading-relaxed shadow-xl ${
                   msg.role === "student" 
-                    ? "bg-white/5 border-white/10 rounded-tr-none" 
-                    : `${config.bg} ${config.border} rounded-tl-none`
+                    ? "bg-white/5 border-white/10 rounded-tr-none text-white" 
+                    : `${config.bg} ${config.border} rounded-tl-none text-slate-100`
                 }`}>
                   <MarkdownMessage text={msg.text} />
                 </div>
-                <div className="flex items-center gap-3 text-[9px] md:text-[10px] font-black uppercase text-slate-500">
-                  <span>{msg.timestamp}</span>
+                <div className={`flex items-center gap-3 text-[9px] font-black uppercase tracking-tighter ${msg.role === "student" ? "justify-end" : ""}`}>
+                  <span className="text-slate-500/80">{msg.timestamp}</span>
                   {msg.role === "ai" && !msg.isStreaming && (
-                    <div className="flex gap-2">
-                      <button onClick={() => copyToClipboard(msg)} className="hover:text-white transition">
-                        {copiedId === msg.id ? "COPIED" : "COPY"}
-                      </button>
-                    </div>
+                    <button onClick={() => copyToClipboard(msg)} className="hover:text-white transition text-slate-500">
+                      {copiedId === msg.id ? "COPIED" : "COPY"}
+                    </button>
                   )}
                 </div>
               </div>
             </motion.div>
           ))}
           {isThinking && (
-            <div className="flex gap-3 md:gap-4">
-              <div className={`w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl shrink-0 flex items-center justify-center ${config.bg}`}>
+            <div className="flex gap-3 md:gap-5 animate-pulse">
+              <div className={`w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl shrink-0 flex items-center justify-center ${config.bg} border ${config.border}`}>
                 <Loader2 className={`animate-spin ${config.theme}`} size={16} className="md:w-5 md:h-5" />
               </div>
-              <div className="p-3 md:p-4 rounded-xl md:rounded-2xl border bg-white/5 border-white/10 italic text-[13px] md:text-sm text-slate-500">
-                Thinking...
+              <div className="px-5 py-4 rounded-2xl border bg-white/5 border-white/10 italic text-sm text-slate-500 shadow-lg">
+                Sensei is thinking...
               </div>
             </div>
           )}
-          <div ref={messagesEndRef} />
+          <div ref={messagesEndRef} className="h-4" />
         </div>
 
         {/* Input Area */}
-        <div className="absolute bottom-0 inset-x-0 p-4 md:p-6 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent pointer-events-none">
-          <div className="max-w-4xl mx-auto relative group pointer-events-auto flex flex-col items-center">
+        <div className="absolute bottom-0 inset-x-0 p-4 md:p-8 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent pointer-events-none z-30">
+          <div className="max-w-4xl mx-auto relative group pointer-events-auto">
             <div className="w-full relative">
-              <div className={`absolute -inset-0.5 bg-gradient-to-r ${config.gradient} rounded-xl md:rounded-2xl opacity-50 blur group-focus-within:opacity-100 transition duration-500`} />
-              <div className="relative flex bg-slate-900 border border-white/10 rounded-xl md:rounded-2xl overflow-hidden focus-within:border-white/20 transition">
+              <div className={`absolute -inset-1 bg-gradient-to-r ${config.gradient} rounded-2xl md:rounded-3xl opacity-30 blur-lg group-focus-within:opacity-60 transition duration-700`} />
+              <div className="relative flex bg-slate-900/90 border border-white/10 rounded-2xl md:rounded-3xl overflow-hidden focus-within:border-white/20 transition backdrop-blur-xl shadow-2xl">
                 <input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && sendMessage()}
                   disabled={isThinking}
                   placeholder={isThinking ? "Thinking..." : `Ask ${config.title}...`}
-                  className="flex-1 bg-transparent px-4 md:px-6 py-3 md:py-4 outline-none text-xs md:text-sm disabled:opacity-50"
+                  className="flex-1 bg-transparent px-6 md:px-8 py-4 md:py-6 outline-none text-sm md:text-base disabled:opacity-50"
                 />
                 <button
                   onClick={sendMessage}
                   disabled={!input.trim() || isThinking}
-                  className={`px-4 md:px-6 flex items-center justify-center transition disabled:opacity-30 ${config.theme}`}
+                  className={`px-6 md:px-10 flex items-center justify-center transition disabled:opacity-30 border-l border-white/5 hover:bg-white/5 ${config.theme}`}
                 >
-                  {isThinking ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
+                  {isThinking ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
                 </button>
               </div>
             </div>
-            <p className="text-center text-[8px] md:text-[10px] text-slate-600 font-black uppercase tracking-widest mt-2 md:mt-4">
-              JEE Mastery System • Powered by Groq AI
-            </p>
+            <div className="flex items-center justify-center gap-3 mt-4">
+              <div className="h-px w-8 bg-slate-800" />
+              <p className="text-[9px] text-slate-600 font-black uppercase tracking-[0.3em]">
+                Volt Sensei • Groq Engine
+              </p>
+              <div className="h-px w-8 bg-slate-800" />
+            </div>
           </div>
         </div>
       </main>
