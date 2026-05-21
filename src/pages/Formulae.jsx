@@ -192,66 +192,76 @@ const ALL_ELEMENTS = [
 
 function PeriodicTable({ onSelect, selectedId }) {
   return (
-    <div className="mb-12 overflow-x-auto custom-scrollbar pb-8">
-      <div className="grid grid-cols-[repeat(18,minmax(0,1fr))] gap-1.5 min-w-[1200px] p-6 bg-white/[0.02] rounded-[3rem] border border-white/5 backdrop-blur-3xl shadow-2xl">
+    <div className="mb-20 -mx-4 md:mx-0 overflow-x-auto custom-scrollbar pb-10 px-4 scroll-smooth">
+      <div className="inline-grid grid-cols-[repeat(18,minmax(75px,1fr))] gap-2.5 p-10 bg-slate-900/40 rounded-[4rem] border border-white/10 backdrop-blur-3xl shadow-[0_0_50px_rgba(0,0,0,0.3)] min-w-max">
         {ALL_ELEMENTS.map((el) => {
           const category = ELEMENT_CATEGORIES[el.cat] || ELEMENT_CATEGORIES.transition;
           const isSelected = selectedId === el.n;
           
           return (
-            <button
+            <motion.button
               key={el.n}
+              whileHover={{ scale: 1.12, zIndex: 50 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => onSelect(el)}
               style={{ gridColumn: el.c, gridRow: el.r }}
-              className={`relative group flex flex-col items-center justify-center h-16 w-16 rounded-xl border transition-all duration-500 ${
+              className={`relative flex flex-col items-center justify-center aspect-square rounded-2xl border transition-all duration-300 ${
                 isSelected
-                  ? `${category.border} ${category.color.replace('bg-', 'bg-opacity-30 ')} ring-2 ring-white/30 scale-110 z-30 shadow-[0_0_30px_rgba(255,255,255,0.15)]`
-                  : `border-white/5 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.08] hover:scale-125 hover:z-40 hover:shadow-glow-soft`
+                  ? `${category.border} ${category.color.replace('bg-', 'bg-opacity-20 ')} ring-2 ring-white/20 shadow-[0_0_25px_rgba(255,255,255,0.1)]`
+                  : `border-white/5 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.05]`
               }`}
             >
-              <span className="absolute top-1 left-1.5 text-[8px] font-black text-slate-500 group-hover:text-white transition-colors">{el.n}</span>
-              <span className={`text-xl font-black transition-all duration-300 ${isSelected ? 'text-white scale-110' : 'text-slate-200 group-hover:text-white'}`}>
+              <span className="absolute top-2 left-2.5 text-[10px] font-black text-slate-500">{el.n}</span>
+              <span className={`text-2xl font-black ${isSelected ? 'text-white' : 'text-slate-200 group-hover:text-white'}`}>
                 {el.s}
               </span>
-              <span className="text-[6px] font-bold text-slate-500 uppercase tracking-tighter truncate w-full px-1 text-center group-hover:text-slate-300">
+              <span className="text-[8px] font-black text-slate-500 uppercase tracking-tight truncate w-full px-1.5 text-center mt-0.5">
                 {el.name}
               </span>
               
-              {/* Category Dot */}
-              <div className={`absolute bottom-1 w-1.5 h-1.5 rounded-full ${category.color} ${isSelected ? 'animate-ping' : ''}`} />
-              
-              {/* Selection Halo */}
+              {/* Category Indicator Line */}
+              <div className={`absolute bottom-2 w-8 h-1 rounded-full ${category.color} ${isSelected ? 'opacity-100 shadow-[0_0_10px_currentColor]' : 'opacity-40'}`} />
+
+              {/* Selected Glow Halo */}
               {isSelected && (
                 <motion.div 
                   layoutId="halo"
-                  className={`absolute -inset-1 rounded-2xl border-2 ${category.border} opacity-50`}
+                  className={`absolute -inset-1.5 rounded-[1.3rem] border-2 ${category.border} opacity-40 blur-[2px]`}
                   initial={false}
                 />
               )}
-            </button>
+            </motion.button>
           );
         })}
         
         {/* Category Legend */}
-        <div className="col-span-18 mt-12 border-t border-white/5 pt-10">
-           <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4">
-              {Object.entries(ELEMENT_CATEGORIES).map(([key, cat]) => (
-                <div key={key} className="flex items-center gap-2 group cursor-default">
-                   <div className={`h-2.5 w-2.5 rounded-full ${cat.color} shadow-[0_0_10px_rgba(0,0,0,0.5)] group-hover:scale-125 transition-transform`} />
-                   <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 group-hover:text-slate-300 transition-colors">{cat.name}</span>
+        <div className="col-span-18 mt-16 pt-12 border-t border-white/10">
+           <div className="flex flex-col items-center gap-12">
+             {/* Category Row */}
+             <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-6 max-w-6xl">
+                {Object.entries(ELEMENT_CATEGORIES).map(([key, cat]) => (
+                  <div key={key} className="flex items-center gap-3 group cursor-default">
+                     <div className={`h-3.5 w-3.5 rounded-full ${cat.color} shadow-[0_0_15px_rgba(0,0,0,0.5)] group-hover:scale-150 transition-transform duration-500`} />
+                     <span className="text-[11px] font-black uppercase tracking-[0.25em] text-slate-500 group-hover:text-white transition-colors duration-300">{cat.name}</span>
+                  </div>
+                ))}
+             </div>
+             
+             {/* Block Row */}
+             <div className="flex items-center gap-10 px-10 py-5 bg-white/[0.03] rounded-3xl border border-white/10 backdrop-blur-2xl">
+                <span className="text-[11px] font-black text-slate-600 uppercase tracking-[0.3em]">Electron Blocks</span>
+                <div className="h-8 w-px bg-white/10" />
+                <div className="flex items-center gap-8">
+                  {['s', 'p', 'd', 'f'].map(block => (
+                    <div key={block} className="flex items-center gap-3 group cursor-default">
+                       <div className="h-8 w-8 rounded-xl border border-white/10 flex items-center justify-center text-[12px] font-black text-white bg-slate-900 group-hover:bg-slate-800 group-hover:border-white/30 transition-all duration-300">
+                         {block.toUpperCase()}
+                       </div>
+                       <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 group-hover:text-white transition-colors duration-300">{block.toUpperCase()}-Block</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-              
-              <div className="h-4 w-px bg-white/10 mx-2" />
-
-              {['s', 'p', 'd', 'f'].map(block => (
-                <div key={block} className="flex items-center gap-2 group cursor-default">
-                   <div className="h-5 w-5 rounded-lg border border-white/10 flex items-center justify-center text-[9px] font-black text-white bg-slate-900 group-hover:bg-slate-800 transition-colors">
-                     {block.toUpperCase()}
-                   </div>
-                   <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 group-hover:text-slate-300 transition-colors">{block.toUpperCase()}-Block</span>
-                </div>
-              ))}
+             </div>
            </div>
         </div>
       </div>
@@ -483,8 +493,25 @@ function Formulae() {
 
         {/* Periodic Table Area */}
         {activeSubject === "chemistry" && (
-          <div className="mb-12">
-            <div className="px-2 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Interactive Modern Periodic Table</div>
+          <div className="mb-20">
+            <div className="flex flex-col md:flex-row items-end justify-between mb-8 px-2 gap-4">
+               <div>
+                  <h2 className="text-4xl font-black text-white uppercase tracking-tighter">Periodic Table</h2>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Master the elements for JEE Chemistry</p>
+               </div>
+               <div className="hidden md:block h-px flex-1 bg-gradient-to-r from-white/10 to-transparent mx-8 mb-4" />
+               <div className="flex items-center gap-3 bg-white/5 border border-white/10 px-4 py-2 rounded-xl backdrop-blur-md">
+                  <div className="flex flex-col items-end">
+                     <span className="text-[8px] font-black text-slate-500 uppercase">Elements</span>
+                     <span className="text-sm font-black text-white">118</span>
+                  </div>
+                  <div className="w-px h-6 bg-white/10" />
+                  <div className="flex flex-col items-end">
+                     <span className="text-[8px] font-black text-slate-500 uppercase">Interactive</span>
+                     <span className="text-sm font-black text-emerald-400 uppercase">Live</span>
+                  </div>
+               </div>
+            </div>
             <PeriodicTable onSelect={setSelectedElement} selectedId={selectedElement?.n} />
             <AnimatePresence>
                {selectedElement && (
