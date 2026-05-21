@@ -299,16 +299,31 @@ const SUBJECT_CONFIG = {
 };
 
 function Formulae() {
+  const { currentUser, loading: authLoading } = useAuth();
   const [activeSubject, setActiveSubject] = useState("physics");
   const [searchQuery, setSearchQuery] = useState("");
   const [aiGeneratedFormula, setAiGeneratedFormula] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedElement, setSelectedElement] = useState(null);
+  const [customFormulae, setCustomFormulae] = useState([]);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [saveStatus, setSaveStatus] = useState(null); // { success: boolean, message: string }
   const config = SUBJECT_CONFIG[activeSubject];
 
+  // Fetch custom formulae
+  useEffect(() => {
+    if (currentUser) {
+      getCustomFormulae(currentUser.uid, activeSubject).then(setCustomFormulae);
+    }
+  }, [currentUser, activeSubject]);
+
+  const allFormulae = useMemo(() => {
+    return [...config.data, ...customFormulae];
+  }, [config.data, customFormulae]);
+
   const { items: filteredFormulae, topConfidence: formulaConfidence, bestMatch: bestFormula, hasExactFullMatch: formulaExactMatch } = useMemo(() => {
-    return intelligentSearch(config.data, searchQuery, ['name', 'formula']);
-  }, [config.data, searchQuery]);
+    return intelligentSearch(allFormulae, searchQuery, ['name', 'formula']);
+  }, [allFormulae, searchQuery]);
 
   const { bestMatch: bestElement, topConfidence: elementConfidence, hasExactFullMatch: elementExactMatch } = useMemo(() => {
     if (activeSubject !== 'chemistry') return { bestMatch: null, topConfidence: 0, hasExactFullMatch: false };
@@ -331,6 +346,7 @@ function Formulae() {
     
     setIsGenerating(true);
     setAiGeneratedFormula(null);
+    setSaveStatus(null);
 
     try {
       let subjectPrompt = "";
@@ -347,8 +363,9 @@ function Formulae() {
         visualPrompt = "visualUnderstanding: Connect formula to reaction/molecule";
       }
 
-      const prompt = `You are an elite JEE mentor. Generate a detailed educational JSON for the ${activeSubject} topic: "${searchQuery}". 
+      const prompt = `You are an elite JEE mentor. Generate a unique, detailed educational JSON for the ${activeSubject} topic: "${searchQuery}". 
       ${subjectPrompt}
+      CRITICAL: Ensure the content is specifically tailored to "${searchQuery}" and not a generic response.
       Include these EXACT fields for the best teaching experience:
       - name: Full Name of the concept
       - formula: The main formula/equation/reaction (use standard text notation)
@@ -377,16 +394,46 @@ function Formulae() {
           role: "student",
           text: prompt
         }
-      ], activeSubject, { max_tokens: 1500, temperature: 0.7 });
+      ], activeSubject, { max_tokens: 1500, temperature: 0.85 }); // Higher temperature for variety
 
       const cleanJson = response.replace(/```json|```/g, "").trim();
       const data = JSON.parse(cleanJson);
       
-      setAiGeneratedFormula({ ...data, id: `ai-${Date.now()}`, isAi: true });
+      const newFormula = { ...data, id: `ai-${Date.now()}`, isAi: true };
+      setAiGeneratedFormula(newFormula);
+      setShowSaveModal(true);
     } catch (err) {
       console.error("AI Generation failed:", err);
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleSaveFormula = async () => {
+    if (!aiGeneratedFormula) return;
+    
+    if (authLoading) {
+      setSaveStatus({ success: false, message: "Checking login..." });
+      return;
+    }
+
+    if (!currentUser) {
+      setSaveStatus({ success: false, message: "Please login to save formula" });
+      return;
+    }
+
+    const result = await saveCustomFormula(currentUser.uid, aiGeneratedFormula, activeSubject);
+    setSaveStatus(result);
+    
+    if (result.success) {
+      // Refresh custom formulae list immediately
+      const updated = await getCustomFormulae(currentUser.uid, activeSubject);
+      setCustomFormulae(updated);
+      // Wait a bit to show success message before closing
+      setTimeout(() => {
+        setShowSaveModal(false);
+        setSaveStatus(null);
+      }, 1500);
     }
   };
 
@@ -598,6 +645,56 @@ function Formulae() {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Save Modal */}
+      <AnimatePresence>
+        {showSaveModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="w-full max-w-md bg-slate-900 border border-white/10 rounded-[2.5rem] p-8 shadow-2xl overflow-hidden relative"
+            >
+              <div className="relative z-10 text-center">
+                <div className="mb-6 mx-auto h-16 w-16 rounded-full bg-electric/10 flex items-center justify-center">
+                  <Sparkles size={32} className="text-electric" />
+                </div>
+                
+                <h3 className="text-2xl font-black text-white mb-2">Save this formula?</h3>
+                <p className="text-slate-400 text-sm mb-8">
+                  Would you like to add <span className="text-white font-bold">"{aiGeneratedFormula?.name}"</span> to your personal library for quick access?
+                </p>
+
+                {saveStatus ? (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`mb-8 p-4 rounded-2xl border ${saveStatus.success ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-amber-500/10 border-amber-500/20 text-amber-400'}`}
+                  >
+                    <p className="text-sm font-black uppercase tracking-widest">{saveStatus.message}</p>
+                  </motion.div>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    <button
+                      onClick={handleSaveFormula}
+                      className="w-full py-4 rounded-2xl bg-electric text-slate-950 text-sm font-black uppercase tracking-widest hover:scale-[1.02] transition-all"
+                    >
+                      Save to Library
+                    </button>
+                    <button
+                      onClick={() => setShowSaveModal(false)}
+                      className="w-full py-4 rounded-2xl bg-white/5 border border-white/10 text-slate-400 text-sm font-black uppercase tracking-widest hover:bg-white/10 transition-all"
+                    >
+                      Let it go
+                    </button>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

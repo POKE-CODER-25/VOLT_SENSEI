@@ -358,14 +358,33 @@ export async function getRevisionHistory(uid, maxItems = 10) {
 // --- Custom User Library (Formulae & Models) ---
 
 export async function saveCustomFormula(uid, formula, subject) {
-  if (!uid) return;
-  await addDoc(collection(db, "customFormulae"), {
-    uid,
-    subject,
-    ...formula,
-    isAi: true,
-    createdAt: serverTimestamp(),
-  });
+  if (!uid) return { success: false, message: "User not logged in" };
+  
+  try {
+    // Check if formula with same name already exists for this user
+    const formulaeQuery = query(
+      collection(db, "customFormulae"),
+      where("uid", "==", uid),
+      where("name", "==", formula.name)
+    );
+    const snapshot = await getDocs(formulaeQuery);
+    
+    if (!snapshot.empty) {
+      return { success: false, message: "Already saved" };
+    }
+
+    await addDoc(collection(db, "customFormulae"), {
+      uid,
+      subject,
+      ...formula,
+      isAi: true,
+      createdAt: serverTimestamp(),
+    });
+    return { success: true, message: "Saved to your library" };
+  } catch (err) {
+    console.error("Error saving formula:", err);
+    return { success: false, message: "Failed to save" };
+  }
 }
 
 export async function getCustomFormulae(uid, subject) {
