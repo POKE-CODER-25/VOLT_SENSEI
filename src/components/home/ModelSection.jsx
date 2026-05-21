@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Box, Layers, Shapes } from "lucide-react";
+import { Box, Layers, Shapes, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const modelCategories = [
@@ -35,17 +35,37 @@ const modelCategories = [
 function ModelSection() {
   return (
     <section className="mx-auto max-w-7xl px-4 py-16 md:px-8">
-      <div className="mb-10 text-center">
-        <p className="text-sm font-black uppercase text-electric">Visual Intuition</p>
-        <h2 className="mt-3 text-3xl font-black text-slate-950 dark:text-white md:text-5xl">
-          3D Models
-        </h2>
-        <p className="mt-4 text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-          Deepen your understanding with interactive 3D visualizations designed for JEE concepts.
-        </p>
+      <div className="mb-16 text-center">
+        <motion.p 
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-[10px] font-black uppercase tracking-[0.3em] text-electric"
+        >
+          Spatial Intelligence
+        </motion.p>
+        <motion.h2 
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.1 }}
+          className="mt-4 text-4xl font-black text-white md:text-6xl"
+        >
+          3D Model <span className="text-electric glow-text">Vault</span>
+        </motion.h2>
+        <motion.p 
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.2 }}
+          className="mt-6 text-slate-400 max-w-2xl mx-auto font-medium leading-relaxed"
+        >
+          A curated repository of interactive spatial concepts. 
+          Bridge the gap between theoretical equations and physical reality.
+        </motion.p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-8 md:grid-cols-3">
         {modelCategories.map((cat, index) => {
           const Icon = cat.icon;
           return (
@@ -54,22 +74,34 @@ function ModelSection() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                whileHover={{ y: -8, transition: { duration: 0.2 } }}
-                className={`group relative overflow-hidden rounded-[2.5rem] border ${cat.border} bg-slate-900/40 p-10 backdrop-blur-xl transition-all duration-300 hover:bg-slate-900/60`}
+                transition={{ delay: index * 0.1, duration: 0.5 }}
+                whileHover={{ y: -10 }}
+                className={`group relative overflow-hidden rounded-[2.5rem] border ${cat.border} bg-slate-900/40 p-10 backdrop-blur-3xl transition-all duration-500`}
               >
-                <div className={`absolute inset-0 bg-gradient-to-br ${cat.color} opacity-0 transition-opacity duration-500 group-hover:opacity-100`} />
+                {/* Dynamic Gradient Glow */}
+                <div className={`absolute inset-0 bg-gradient-to-br ${cat.color} opacity-0 transition-opacity duration-700 group-hover:opacity-100`} />
+                
+                {/* Geometric Pattern Overlay */}
+                <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[linear-gradient(45deg,#fff_1px,transparent_1px),linear-gradient(-45deg,#fff_1px,transparent_1px)] [background-size:30px_30px]" />
                 
                 <div className="relative z-10 flex flex-col items-center text-center">
-                  <div className={`mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-white/5 shadow-inner transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6`}>
-                    <Icon size={40} className={cat.accent} />
+                  <div className={`mb-8 flex h-24 w-24 items-center justify-center rounded-[2rem] bg-white/5 border border-white/10 shadow-2xl transition-all duration-700 group-hover:scale-110 group-hover:rotate-[360deg] group-hover:bg-white/10`}>
+                    <Icon size={44} className={cat.accent} />
                   </div>
-                  <h3 className="text-2xl font-black text-white">{cat.title}</h3>
-                  <p className="mt-4 text-sm font-medium leading-relaxed text-slate-400">
+                  <h3 className="text-2xl font-black text-white tracking-tight">{cat.title}</h3>
+                  <p className="mt-4 text-sm font-medium leading-relaxed text-slate-400 transition-colors group-hover:text-white/80">
                     {cat.desc}
                   </p>
-                  <div className={`mt-8 flex items-center gap-2 text-xs font-black uppercase tracking-widest ${cat.accent}`}>
-                    Explore Models &rarr;
+                  
+                  <div className="mt-10 flex items-center gap-3">
+                    <div className={`h-1.5 w-1.5 rounded-full bg-current ${cat.accent} animate-pulse`} />
+                    <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${cat.accent}`}>
+                      Ready to Render
+                    </span>
+                  </div>
+
+                  <div className={`mt-8 flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-white/40 transition-all duration-300 group-hover:text-white group-hover:gap-4`}>
+                    Explore Gallery <ChevronRight size={14} />
                   </div>
                 </div>
               </motion.div>

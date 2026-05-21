@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Atom, Calculator, Cpu, Sparkles } from "lucide-react";
+import { Atom, Calculator, Cpu, Sparkles, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const subjects = [
@@ -94,44 +94,75 @@ const subjects = [
 function SubjectCards() {
   return (
     <section className="mx-auto max-w-7xl px-4 py-16 md:px-8">
-      <div className="mb-10 text-center">
-        <p className="text-sm font-black uppercase text-electric">Multi-Subject Mastery</p>
-        <h2 className="mt-3 text-3xl font-black text-slate-950 dark:text-white md:text-5xl">
-          Choose Your Sensei
-        </h2>
-        <p className="mt-4 text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-          Immersive AI environments dedicated to Physics, Maths, and Chemistry.
-          Each tailored to help you visualize and conquer JEE concepts.
-        </p>
+      <div className="mb-16 text-center">
+        <motion.p 
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-[10px] font-black uppercase tracking-[0.3em] text-electric"
+        >
+          Adaptive Learning Core
+        </motion.p>
+        <motion.h2 
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.1 }}
+          className="mt-4 text-4xl font-black text-white md:text-6xl tracking-tight"
+        >
+          Choose Your <span className="text-electric glow-text">Sensei</span>
+        </motion.h2>
+        <motion.p 
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.2 }}
+          className="mt-6 text-slate-400 max-w-2xl mx-auto font-medium leading-relaxed"
+        >
+          Proprietary AI engines dedicated to the JEE ecosystem. 
+          Select a subject to initialize your immersive classroom.
+        </motion.p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-8 md:grid-cols-3">
         {subjects.map((subject, index) => {
           const Icon = subject.icon;
           return (
             <Link key={subject.title} to={subject.link}>
               <motion.article
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ delay: index * 0.1, duration: 0.5 }}
-                whileHover={{ y: -5, scale: 1.02 }}
-                className={`relative overflow-hidden rounded-[2rem] border ${subject.border} bg-slate-950 p-8 ${subject.shadow} transition-all duration-300`}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ delay: index * 0.1, duration: 0.6, ease: "circOut" }}
+                whileHover={{ y: -12 }}
+                className={`group relative overflow-hidden rounded-[2.5rem] border border-white/5 bg-slate-900/40 p-10 backdrop-blur-3xl transition-all duration-500 hover:border-white/20`}
               >
-                <div className={`absolute inset-0 bg-gradient-to-br ${subject.theme} opacity-50`} />
+                {/* Neon Hover Glow */}
+                <div className={`absolute inset-0 bg-gradient-to-br ${subject.theme} opacity-0 transition-opacity duration-500 group-hover:opacity-40`} />
+                
+                {/* Tech Grid Pattern */}
+                <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:20px_20px]" />
+                
                 <subject.Animation />
+                
                 <div className="relative z-10">
-                  <div className={`mb-6 grid h-16 w-16 place-items-center rounded-2xl ${subject.bg} ${subject.accent}`}>
+                  <div className={`mb-8 grid h-16 w-16 place-items-center rounded-2xl bg-white/5 border border-white/10 ${subject.accent} transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3`}>
                     <Icon size={32} />
                   </div>
-                  <h3 className="text-2xl font-black text-white flex items-center gap-2">
-                    {subject.title} <Sparkles size={18} className={subject.accent} />
+                  <h3 className="text-2xl font-black text-white flex items-center gap-3">
+                    {subject.title}
                   </h3>
-                  <p className="mt-4 text-slate-300 leading-relaxed font-medium">
+                  <p className="mt-4 text-sm font-medium leading-relaxed text-slate-400 transition-colors group-hover:text-slate-300">
                     {subject.text}
                   </p>
-                  <div className={`mt-6 inline-flex items-center gap-2 font-bold ${subject.accent}`}>
-                    Enter Classroom &rarr;
+                  
+                  <div className="mt-10 flex items-center justify-between">
+                    <div className={`text-[10px] font-black uppercase tracking-widest ${subject.accent}`}>
+                      Initialising...
+                    </div>
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-full bg-white/5 border border-white/10 text-white transition-all duration-300 group-hover:bg-white group-hover:text-slate-950`}>
+                      <ChevronRight size={18} />
+                    </div>
                   </div>
                 </div>
               </motion.article>
