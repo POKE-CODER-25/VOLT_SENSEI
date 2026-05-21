@@ -4,7 +4,9 @@ import FormulaeSection from "../components/home/FormulaeSection";
 import ChemistryVisualSection from "../components/home/ChemistryVisualSection";
 import ModelSection from "../components/home/ModelSection";
 import MathsVisualSection from "../components/home/MathsVisualSection";
+import FeatureShowcase from "../components/home/FeatureShowcase";
 import QuickAccess from "../components/home/QuickAccess";
+import CreatorSection from "../components/home/CreatorSection";
 
 function Home() {
   return (
@@ -34,7 +36,11 @@ function Home() {
           <div className="absolute inset-x-0 -bottom-24 h-48 bg-gradient-to-b from-slate-950 to-transparent pointer-events-none" />
         </div>
 
+        <FeatureShowcase />
+
         <QuickAccess />
+
+        <CreatorSection />
       </div>
 
       {/* Decorative ambient glows */}
