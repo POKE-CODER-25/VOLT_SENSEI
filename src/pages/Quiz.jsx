@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { BarChart3, CheckCircle2, Clock, Flame, Loader2, Target, Trophy, Zap, Atom, Calculator, Cpu } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import PageHeader from "../components/common/PageHeader";
 import { useAuth } from "../context/AuthContext";
