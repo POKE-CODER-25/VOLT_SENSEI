@@ -14,6 +14,7 @@ import {
   deleteChatSession
 } from "../services/firestore";
 import { streamVoltSensei } from "../services/groq";
+import { intelligentSearch } from "../services/search";
 
 const subjectData = {
   physics: {
@@ -300,10 +301,16 @@ function Learn() {
     }
   };
 
-  const filteredSessions = useMemo(() => {
-    return sessions.filter(s => s.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                                (s.lastMessage && s.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())));
+  const { items: filteredSessions, topConfidence, bestMatch } = useMemo(() => {
+    return intelligentSearch(sessions, searchQuery, ['title', 'lastMessage']);
   }, [sessions, searchQuery]);
+
+  // Auto-select session if confidence is high and user is likely targeting this specific chat
+  useEffect(() => {
+    if (searchQuery.length > 3 && topConfidence > 0.85 && bestMatch && bestMatch.id !== currentSessionId) {
+      setCurrentSessionId(bestMatch.id);
+    }
+  }, [searchQuery, topConfidence, bestMatch, currentSessionId]);
 
   const copyToClipboard = async (msg) => {
     await navigator.clipboard.writeText(msg.text);

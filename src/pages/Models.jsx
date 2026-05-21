@@ -6,6 +6,7 @@ import { OrbitControls, PerspectiveCamera, Float, MeshDistortMaterial, Sphere, B
 import { Search, Box as BoxIcon, Shapes, Layers, Play, Info, RotateCcw, X, Sparkles, Menu } from "lucide-react";
 import PageHeader from "../components/common/PageHeader";
 import { askVoltSensei } from "../services/groq";
+import { intelligentSearch } from "../services/search";
 import * as THREE from "three";
 
 // --- Components for Highlighting ---
@@ -1533,11 +1534,20 @@ function Models() {
     return steps;
   };
 
-  const filteredModels = useMemo(() => {
-    const standard = models.filter(m => m.name.toLowerCase().includes(searchQuery.toLowerCase()));
-    const custom = customModels.filter(m => m.subject === subject && m.name.toLowerCase().includes(searchQuery.toLowerCase()));
-    return [...standard, ...custom];
+  const { items: filteredModels, topConfidence, bestMatch } = useMemo(() => {
+    const standard = models;
+    const custom = customModels.filter(m => m.subject === subject);
+    return intelligentSearch([...standard, ...custom], searchQuery, ['name']);
   }, [models, customModels, searchQuery, subject]);
+
+  // Auto-select model if confidence is high
+  useEffect(() => {
+    if (searchQuery.length > 3 && topConfidence > 0.85 && bestMatch && bestMatch.id !== selectedModel.id) {
+      setSelectedModel(bestMatch);
+      setShowConcept(false);
+      if (isMobile) setShowGallery(false);
+    }
+  }, [searchQuery, topConfidence, bestMatch, selectedModel.id, isMobile]);
 
   const generateAiModel = () => {
     if (!searchQuery.trim()) return;

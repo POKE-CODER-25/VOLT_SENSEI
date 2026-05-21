@@ -3,6 +3,7 @@ import { Atom, Calculator, Cpu, Sparkles, BookOpen, Search, Filter, ChevronRight
 import { useState, useMemo, useEffect } from "react";
 import PageHeader from "../components/common/PageHeader";
 import { askVoltSensei } from "../services/groq";
+import { intelligentSearch } from "../services/search";
 
 const PHYSICS_FORMULAE = [
   {
@@ -338,13 +339,23 @@ function Formulae() {
   const [selectedElement, setSelectedElement] = useState(null);
   const config = SUBJECT_CONFIG[activeSubject];
 
-  const filteredFormulae = useMemo(() => {
-    if (!searchQuery.trim()) return config.data;
-    return config.data.filter(f => 
-      f.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      f.formula.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+  const { items: filteredFormulae, topConfidence: formulaConfidence, bestMatch: bestFormula } = useMemo(() => {
+    return intelligentSearch(config.data, searchQuery, ['name', 'formula']);
   }, [config.data, searchQuery]);
+
+  const { bestMatch: bestElement, topConfidence: elementConfidence } = useMemo(() => {
+    if (activeSubject !== 'chemistry') return { bestMatch: null, topConfidence: 0 };
+    return intelligentSearch(PERIODIC_TABLE_DATA, searchQuery, ['s', 'name']);
+  }, [searchQuery, activeSubject]);
+
+  // Auto-select element or target formula if confidence is high
+  useEffect(() => {
+    if (searchQuery.length >= 3) {
+      if (elementConfidence > 0.85 && bestElement && activeSubject === "chemistry") {
+        setSelectedElement(bestElement);
+      }
+    }
+  }, [searchQuery, elementConfidence, bestElement, activeSubject]);
 
   const handleAiSearch = async () => {
     if (!searchQuery.trim() || isGenerating) return;
