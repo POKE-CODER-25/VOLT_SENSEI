@@ -2,6 +2,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Atom, Calculator, Cpu, Sparkles, BookOpen, Search, Filter, ChevronRight, Loader2, Info, Zap, X } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 import PageHeader from "../components/common/PageHeader";
+import { useAuth } from "../context/AuthContext";
+import { saveCustomFormula, getCustomFormulae } from "../services/firestore";
 import { askVoltSensei } from "../services/groq";
 import { intelligentSearch } from "../services/search";
 
@@ -304,27 +306,24 @@ function Formulae() {
   const [selectedElement, setSelectedElement] = useState(null);
   const config = SUBJECT_CONFIG[activeSubject];
 
-  const { items: filteredFormulae, topConfidence: formulaConfidence, bestMatch: bestFormula } = useMemo(() => {
+  const { items: filteredFormulae, topConfidence: formulaConfidence, bestMatch: bestFormula, hasExactFullMatch: formulaExactMatch } = useMemo(() => {
     return intelligentSearch(config.data, searchQuery, ['name', 'formula']);
   }, [config.data, searchQuery]);
 
-  const { bestMatch: bestElement, topConfidence: elementConfidence } = useMemo(() => {
-    if (activeSubject !== 'chemistry') return { bestMatch: null, topConfidence: 0 };
+  const { bestMatch: bestElement, topConfidence: elementConfidence, hasExactFullMatch: elementExactMatch } = useMemo(() => {
+    if (activeSubject !== 'chemistry') return { bestMatch: null, topConfidence: 0, hasExactFullMatch: false };
     return intelligentSearch(ALL_ELEMENTS, searchQuery, ['s', 'name']);
   }, [searchQuery, activeSubject]);
 
   // Auto-select element or target formula if confidence is high
   useEffect(() => {
     if (searchQuery.trim().length > 0 && activeSubject === "chemistry") {
-      const isExactSymbol = bestElement && bestElement.s.toLowerCase() === searchQuery.toLowerCase().trim();
-      const isExactName = bestElement && bestElement.name.toLowerCase() === searchQuery.toLowerCase().trim();
-      
       // Auto-open if it's an exact match (even for short symbols like 'H') or high confidence fuzzy match
-      if (isExactSymbol || isExactName || (searchQuery.length >= 3 && elementConfidence > 0.75)) {
+      if (elementExactMatch || (searchQuery.length >= 3 && elementConfidence > 0.75)) {
         if (bestElement) setSelectedElement(bestElement);
       }
     }
-  }, [searchQuery, elementConfidence, bestElement, activeSubject]);
+  }, [searchQuery, elementConfidence, bestElement, activeSubject, elementExactMatch]);
 
   const handleAiSearch = async () => {
     if (!searchQuery.trim() || isGenerating) return;
@@ -518,7 +517,7 @@ function Formulae() {
               className="w-full rounded-2xl border border-white/10 bg-white/5 py-4 pl-12 pr-4 text-sm font-medium outline-none focus:border-white/20 transition-all"
             />
           </div>
-          {filteredFormulae.length === 0 && searchQuery && (
+          {!formulaExactMatch && searchQuery.trim().length > 0 && (
              <button 
               onClick={handleAiSearch}
               disabled={isGenerating}

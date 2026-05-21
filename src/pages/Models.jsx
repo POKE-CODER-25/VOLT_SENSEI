@@ -3,8 +3,10 @@ import { useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera, Float, MeshDistortMaterial, Sphere, Box, Torus, Center, Cylinder, Html } from "@react-three/drei";
-import { Search, Box as BoxIcon, Shapes, Layers, Play, Info, RotateCcw, X, Sparkles, Menu } from "lucide-react";
+import { Search, Box as BoxIcon, Shapes, Layers, Play, Info, RotateCcw, X, Sparkles, Menu, Save } from "lucide-react";
 import PageHeader from "../components/common/PageHeader";
+import { useAuth } from "../context/AuthContext";
+import { saveCustomModel, getCustomModels } from "../services/firestore";
 import { askVoltSensei } from "../services/groq";
 import { intelligentSearch } from "../services/search";
 import * as THREE from "three";
@@ -1415,6 +1417,7 @@ const subjectMeta = {
 
 function Models() {
   const { subject } = useParams();
+  const { currentUser } = useAuth();
   const meta = subjectMeta[subject] || subjectMeta.physics;
   const models = modelData[subject] || modelData.physics;
 
@@ -1426,6 +1429,33 @@ function Models() {
   const [customModels, setCustomModels] = useState([]);
   const [showGallery, setShowGallery] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const [showSavePrompt, setShowSavePrompt] = useState(false);
+
+  useEffect(() => {
+    const loadCustom = async () => {
+      if (currentUser) {
+        const data = await getCustomModels(currentUser.uid, subject);
+        const mapped = data.map(m => ({
+          ...m,
+          Component: m.subject === "chemistry" ? AIChemistryPlaceholder 
+                   : m.subject === "physics" ? AIPhysicsPlaceholder 
+                   : AIMathsPlaceholder
+        }));
+        setCustomModels(mapped);
+      }
+    };
+    loadCustom();
+  }, [currentUser, subject]);
+
+  const handleSaveModel = async () => {
+    if (!currentUser || !selectedModel || !selectedModel.isAi) return;
+    try {
+      await saveCustomModel(currentUser.uid, selectedModel, subject);
+      setShowSavePrompt(false);
+    } catch (err) {
+      console.error("Save failed:", err);
+    }
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -1534,7 +1564,7 @@ function Models() {
     return steps;
   };
 
-  const { items: filteredModels, topConfidence, bestMatch } = useMemo(() => {
+  const { items: filteredModels, topConfidence, bestMatch, hasExactFullMatch } = useMemo(() => {
     const standard = models;
     const custom = customModels.filter(m => m.subject === subject);
     return intelligentSearch([...standard, ...custom], searchQuery, ['name']);
@@ -1679,7 +1709,7 @@ function Models() {
                       </button>
                     ))}
                     
-                    {filteredModels.length === 0 && searchQuery && (
+                    {!hasExactFullMatch && searchQuery.trim().length > 0 && (
                       <button
                         onClick={generateAiModel}
                         className="col-span-2 group flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/20 bg-white/5 p-8 text-center transition-all hover:bg-white/10 hover:border-electric"

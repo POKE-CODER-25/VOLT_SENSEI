@@ -354,3 +354,55 @@ export async function getRevisionHistory(uid, maxItems = 10) {
     .map((item) => ({ id: item.id, ...item.data() }))
     .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 }
+
+// --- Custom User Library (Formulae & Models) ---
+
+export async function saveCustomFormula(uid, formula, subject) {
+  if (!uid) return;
+  await addDoc(collection(db, "customFormulae"), {
+    uid,
+    subject,
+    ...formula,
+    isAi: true,
+    createdAt: serverTimestamp(),
+  });
+}
+
+export async function getCustomFormulae(uid, subject) {
+  if (!uid) return [];
+  const formulaeQuery = query(
+    collection(db, "customFormulae"),
+    where("uid", "==", uid),
+    where("subject", "==", subject),
+  );
+  const snapshot = await getDocs(formulaeQuery);
+  return snapshot.docs
+    .map(item => ({ id: item.id, ...item.data() }))
+    .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+}
+
+export async function saveCustomModel(uid, model, subject) {
+  if (!uid) return;
+  // Note: We don't save the React component, just the metadata
+  const { Component, ...metadata } = model;
+  await addDoc(collection(db, "customModels"), {
+    uid,
+    subject,
+    ...metadata,
+    isAi: true,
+    createdAt: serverTimestamp(),
+  });
+}
+
+export async function getCustomModels(uid, subject) {
+  if (!uid) return [];
+  const modelsQuery = query(
+    collection(db, "customModels"),
+    where("uid", "==", uid),
+    where("subject", "==", subject),
+  );
+  const snapshot = await getDocs(modelsQuery);
+  return snapshot.docs
+    .map(item => ({ id: item.id, ...item.data() }))
+    .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+}
