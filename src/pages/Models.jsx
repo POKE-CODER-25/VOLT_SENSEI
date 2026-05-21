@@ -2,9 +2,10 @@ import { useState, useMemo, Suspense, useRef, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, PerspectiveCamera, Float, MeshDistortMaterial, Sphere, Box, Torus, Center, Cylinder } from "@react-three/drei";
+import { OrbitControls, PerspectiveCamera, Float, MeshDistortMaterial, Sphere, Box, Torus, Center, Cylinder, Html } from "@react-three/drei";
 import { Search, Box as BoxIcon, Shapes, Layers, Play, Info, RotateCcw, X, Sparkles } from "lucide-react";
 import PageHeader from "../components/common/PageHeader";
+import { askVoltSensei } from "../services/groq";
 import * as THREE from "three";
 
 // --- Components for Highlighting ---
@@ -95,54 +96,170 @@ function AtomStructure({ nucleusColor, shells, highlight }) {
   );
 }
 
-function Bond({ start, end, double = false, highlighted }) {
+function BondMesh({ start, end, double, highlighted, isFormation, animProgress }) {
+  const ref = useRef();
+  const highlightRef = useRef();
+  
   const startVec = new THREE.Vector3(...start);
   const endVec = new THREE.Vector3(...end);
   const dir = new THREE.Vector3().subVectors(endVec, startVec);
   const len = dir.length();
   const mid = new THREE.Vector3().addVectors(startVec, endVec).multiplyScalar(0.5);
-  
+  const quaternion = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
+
+  useFrame((state) => {
+    if (!ref.current) return;
+    if (isFormation) {
+      const p = animProgress.current;
+      ref.current.position.copy(mid).multiplyScalar(p);
+      ref.current.scale.set(p, p, p);
+      ref.current.visible = p > 0.4;
+    } else {
+      ref.current.position.copy(mid);
+      ref.current.scale.set(1, 1, 1);
+      ref.current.visible = true;
+    }
+
+    if (highlightRef.current) {
+      if (highlighted) {
+        const scale = 1 + Math.sin(state.clock.getElapsedTime() * 5) * 0.15;
+        highlightRef.current.scale.set(scale, scale, scale);
+        highlightRef.current.visible = true;
+      } else {
+        highlightRef.current.visible = false;
+      }
+    }
+  });
+
   return (
-    <group position={mid} quaternion={new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize())}>
-      <HighlightWrapper active={highlighted}>
-        {double ? (
-          <>
-            <Cylinder args={[0.04, 0.04, len]} position={[0.1, 0, 0]}>
-              <meshStandardMaterial color={highlighted ? "#fbbf24" : "#64748b"} emissive={highlighted ? "#fbbf24" : "black"} emissiveIntensity={highlighted ? 2 : 0} />
-            </Cylinder>
-            <Cylinder args={[0.04, 0.04, len]} position={[-0.1, 0, 0]}>
-              <meshStandardMaterial color={highlighted ? "#fbbf24" : "#64748b"} emissive={highlighted ? "#fbbf24" : "black"} emissiveIntensity={highlighted ? 2 : 0} />
-            </Cylinder>
-          </>
-        ) : (
-          <Cylinder args={[0.05, 0.05, len]}>
-            <meshStandardMaterial color={highlighted ? "#fbbf24" : "#64748b"} emissive={highlighted ? "#fbbf24" : "black"} emissiveIntensity={highlighted ? 2 : 0} />
+    <group ref={ref} quaternion={quaternion}>
+      {double ? (
+        <>
+          <Cylinder args={[0.04, 0.04, len]} position={[0.1, 0, 0]}>
+            <meshStandardMaterial color={highlighted ? "#fbbf24" : "#64748b"} emissive={highlighted ? "#fbbf24" : "black"} emissiveIntensity={highlighted ? 1.5 : 0} />
           </Cylinder>
-        )}
-      </HighlightWrapper>
+          <Cylinder args={[0.04, 0.04, len]} position={[-0.1, 0, 0]}>
+            <meshStandardMaterial color={highlighted ? "#fbbf24" : "#64748b"} emissive={highlighted ? "#fbbf24" : "black"} emissiveIntensity={highlighted ? 1.5 : 0} />
+          </Cylinder>
+        </>
+      ) : (
+        <Cylinder args={[0.05, 0.05, len]}>
+          <meshStandardMaterial color={highlighted ? "#fbbf24" : "#64748b"} emissive={highlighted ? "#fbbf24" : "black"} emissiveIntensity={highlighted ? 1.5 : 0} />
+        </Cylinder>
+      )}
+      <group ref={highlightRef}>
+         <Cylinder args={[0.09, 0.09, len]}>
+            <meshBasicMaterial color="#fbbf24" transparent opacity={0.4} />
+         </Cylinder>
+      </group>
     </group>
   );
 }
 
-function Molecule({ atoms, bonds, highlight }) {
-  const areAtomsHighlighted = highlight === "primary";
-  const areBondsHighlighted = highlight === "secondary" || highlight === "detail";
+function AtomMesh({ pos, size, color, highlighted, isFormation, animProgress }) {
+  const ref = useRef();
+  const highlightRef = useRef();
+
+  useFrame((state) => {
+    if (!ref.current) return;
+    
+    if (isFormation) {
+      const p = animProgress.current;
+      const currentPos = new THREE.Vector3(...pos).multiplyScalar(p);
+      ref.current.position.copy(currentPos);
+      ref.current.scale.set(p, p, p);
+    } else {
+      ref.current.position.set(...pos);
+      ref.current.scale.set(1, 1, 1);
+    }
+
+    if (highlightRef.current) {
+      if (highlighted) {
+        const scale = 1 + Math.sin(state.clock.getElapsedTime() * 5) * 0.15;
+        highlightRef.current.scale.set(scale, scale, scale);
+        highlightRef.current.visible = true;
+      } else {
+        highlightRef.current.visible = false;
+      }
+    }
+  });
+
+  return (
+    <group ref={ref}>
+      <mesh>
+        <sphereGeometry args={[size, 32, 32]} />
+        <meshStandardMaterial 
+          color={color} 
+          emissive={color} 
+          emissiveIntensity={highlighted ? 1.5 : 0} 
+        />
+      </mesh>
+      <mesh ref={highlightRef}>
+        <sphereGeometry args={[size + 0.08, 32, 32]} />
+        <meshBasicMaterial color="#fbbf24" transparent opacity={0.4} />
+      </mesh>
+    </group>
+  );
+}
+
+function Molecule({ atoms, bonds, highlight, formula }) {
+  const isFormation = highlight === "formation";
+  const areAtomsHighlighted = highlight === "primary" || highlight === "atoms";
+  const areBondsHighlighted = highlight === "secondary" || highlight === "detail" || highlight === "bonds";
+
+  const animProgress = useRef(0);
+
+  useFrame((state, delta) => {
+    if (isFormation) {
+      animProgress.current = Math.min(animProgress.current + delta * 0.8, 1);
+    } else {
+      animProgress.current = 1;
+    }
+  });
 
   return (
     <group>
-      {atoms.map((atom, i) => (
-        <mesh key={i} position={atom.pos}>
-          <sphereGeometry args={[atom.size || 0.4, 32, 32]} />
-          <meshStandardMaterial 
+      {formula && (
+        <Html position={[0, 3, 0]} center zIndexRange={[100, 0]}>
+          <div className="pointer-events-none px-6 py-3 bg-slate-900/90 backdrop-blur-2xl rounded-2xl border border-white/20 text-white font-black text-2xl tracking-widest shadow-[0_0_40px_rgba(255,255,255,0.15)] ring-1 ring-white/10 whitespace-nowrap">
+            {formula}
+          </div>
+        </Html>
+      )}
+      {atoms.map((atom, i) => {
+        let isHighlighted = areAtomsHighlighted;
+        if (highlight === `atom-${i}`) isHighlighted = true;
+        if (highlight === 'atoms-H' && atom.color === '#ffffff') isHighlighted = true;
+        if (highlight === 'atoms-O' && atom.color === '#ef4444') isHighlighted = true;
+        if (highlight === 'atoms-C' && atom.color === '#334155') isHighlighted = true;
+        
+        return (
+          <AtomMesh 
+            key={i} 
+            pos={atom.pos} 
+            size={atom.size || 0.4} 
             color={atom.color} 
-            emissive={atom.color} 
-            emissiveIntensity={areAtomsHighlighted ? 2 : 0} 
+            highlighted={isHighlighted} 
+            isFormation={isFormation} 
+            animProgress={animProgress}
           />
-        </mesh>
-      ))}
-      {bonds.map((bond, i) => (
-        <Bond key={i} start={bond.start} end={bond.end} double={bond.double} highlighted={areBondsHighlighted} />
-      ))}
+        );
+      })}
+      {bonds.map((bond, i) => {
+        let isHighlighted = areBondsHighlighted;
+        if (highlight === `bond-${i}`) isHighlighted = true;
+        return (
+          <BondMesh 
+            key={i} 
+            start={bond.start} 
+            end={bond.end} 
+            double={bond.double} 
+            highlighted={isHighlighted}
+            isFormation={isFormation}
+            animProgress={animProgress}
+          />
+        );
+      })}
     </group>
   );
 }
@@ -250,7 +367,7 @@ const DNAHelixModel = ({ highlight }) => {
             <sphereGeometry args={[0.2, 16, 16]} />
             <meshStandardMaterial color="#ef4444" emissive="#ef4444" emissiveIntensity={isBackboneHighlighted ? 2 : 0} />
           </mesh>
-          {i % 2 === 0 && <Bond start={p.p1} end={p.p2} highlighted={areBasesHighlighted} />}
+          {i % 2 === 0 && <BondMesh start={p.p1} end={p.p2} highlighted={areBasesHighlighted} />}
         </group>
       ))}
     </group>
@@ -840,53 +957,179 @@ function FunctionSurfaceModel({ highlight }) {
 
 // --- AI Procedural Components (Placeholders) ---
 
-function AIChemistryPlaceholder({ highlight }) {
+const getStringHash = (str) => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+};
+
+function AIChemistryPlaceholder({ highlight, name, formula }) {
+  const hash = useMemo(() => getStringHash(name || "default"), [name]);
+  
+  const { atoms, bonds } = useMemo(() => {
+    const geometryIndex = hash % 6; 
+    const atomsList = [];
+    const colors = ["#ef4444", "#3b82f6", "#10b981", "#fbbf24", "#ffffff", "#a855f7"];
+    
+    // Central atom
+    atomsList.push({ pos: [0, 0, 0], color: colors[hash % colors.length], size: 0.55 });
+    
+    const r = 2.2;
+    // Standard molecular geometries based on VSEPR
+    const geometries = [
+      [[r, 0, 0], [-r, 0, 0]], // Linear
+      [[r * 0.86, r * 0.5, 0], [-r * 0.86, r * 0.5, 0]], // Bent
+      [[r, 0, 0], [r * -0.5, r * 0.86, 0], [r * -0.5, r * -0.86, 0]], // Trigonal Planar
+      [[r, r, r], [r, -r, -r], [-r, r, -r], [-r, -r, r]].map(p => new THREE.Vector3(...p).normalize().multiplyScalar(r).toArray()), // Tetrahedral
+      [[0, r, 0], [0, -r, 0], [r, 0, 0], [r*-0.5, 0, r*0.86], [r*-0.5, 0, r*-0.86]], // Trigonal Bipyramidal
+      [[r, 0, 0], [-r, 0, 0], [0, r, 0], [0, -r, 0], [0, 0, r], [0, 0, -r]], // Octahedral
+    ];
+    
+    const points = geometries[geometryIndex];
+    points.forEach((p, i) => {
+      atomsList.push({
+        pos: p,
+        color: colors[(hash + i + 1) % colors.length],
+        size: 0.35
+      });
+    });
+
+    const bondsList = [];
+    for (let i = 1; i < atomsList.length; i++) {
+       bondsList.push({ start: atomsList[0].pos, end: atomsList[i].pos });
+    }
+    
+    return { atoms: atomsList, bonds: bondsList };
+  }, [hash]);
+
+  return <Molecule atoms={atoms} bonds={bonds} highlight={highlight} formula={formula} />;
+}
+
+function AIPhysicsPlaceholder({ highlight, name, formula }) {
   const isHigh = highlight !== "none";
+  const hash = useMemo(() => getStringHash(name || "default"), [name]);
+  const type = hash % 3;
+  const rotorRef = useRef();
+
+  useFrame((state) => {
+    if (rotorRef.current) {
+      rotorRef.current.rotation.y = state.clock.getElapsedTime() * 2;
+    }
+  });
+
   return (
     <group>
-      <Sphere args={[0.8, 32, 32]}>
-        <meshStandardMaterial color="#3b82f6" emissive="#3b82f6" emissiveIntensity={isHigh ? 2 : 0.5} />
-      </Sphere>
-      {[1, -1].map((x, i) => (
-        <group key={i} position={[x * 1.2, 0.8, 0]}>
-          <Sphere args={[0.4, 32, 32]}>
-            <meshStandardMaterial color="#ffffff" />
-          </Sphere>
-          <Cylinder args={[0.1, 0.1, 1]} position={[-x * 0.6, -0.4, 0]} rotation={[0, 0, x * Math.PI / 4]}>
-            <meshStandardMaterial color="#64748b" />
+      {formula && (
+        <Html position={[0, 4, 0]} center zIndexRange={[100, 0]}>
+          <div className="pointer-events-none px-6 py-3 bg-slate-900/90 backdrop-blur-2xl rounded-2xl border border-white/20 text-white font-black text-2xl tracking-widest shadow-[0_0_40px_rgba(255,255,255,0.15)] ring-1 ring-white/10 whitespace-nowrap">
+            {formula}
+          </div>
+        </Html>
+      )}
+      {/* Heavy Lab Base */}
+      <Box args={[6, 0.4, 4]} position={[0, -2.5, 0]}>
+        <meshStandardMaterial color="#334155" metalness={0.8} roughness={0.2} />
+      </Box>
+
+      {type === 0 && ( // Optics Apparatus
+        <group>
+          <group position={[-2, -1, 0]}>
+            <Box args={[1.5, 1, 1]}><meshStandardMaterial color="#1e293b" /></Box>
+            <Cylinder args={[0.2, 0.2, 0.5]} rotation={[0, 0, Math.PI / 2]} position={[0.8, 0, 0]}>
+              <meshStandardMaterial color="#ef4444" emissive="#ef4444" emissiveIntensity={5} />
+            </Cylinder>
+          </group>
+          <group position={[0, -1, 0]} rotation={[0, Math.PI/4, 0]}>
+            <mesh><cylinderGeometry args={[1, 1, 2.5, 3]} /><meshStandardMaterial color="#00f5ff" transparent opacity={0.4} /></mesh>
+          </group>
+          <Cylinder args={[0.02, 0.02, 8]} rotation={[0, 0, Math.PI / 2]} position={[1, -1, 0]}>
+            <meshStandardMaterial color="#ef4444" emissive="#ef4444" emissiveIntensity={10} />
           </Cylinder>
         </group>
-      ))}
+      )}
+
+      {type === 1 && ( // Mechanics Apparatus
+        <group>
+          <Cylinder args={[0.15, 0.15, 6]} position={[-2, 0, 0]}><meshStandardMaterial color="#94a3b8" /></Cylinder>
+          <Box args={[4, 0.15, 0.15]} position={[0, 2.8, 0]}><meshStandardMaterial color="#94a3b8" /></Box>
+          <group position={[1.5, 2.8, 0]}>
+             <Torus args={[0.5, 0.1, 16, 32]} rotation={[0, Math.PI/2, 0]}><meshStandardMaterial color="#475569" /></Torus>
+             <Cylinder args={[0.02, 0.02, 4]} position={[0, -2, 0]}><meshStandardMaterial color="#ffffff" /></Cylinder>
+             <Box args={[1, 1, 1]} position={[0, -4, 0]}>
+                <meshStandardMaterial color="#ef4444" emissive="#ef4444" emissiveIntensity={isHigh ? 2 : 0} />
+             </Box>
+          </group>
+        </group>
+      )}
+
+      {type === 2 && ( // EM Apparatus
+        <group>
+          <group rotation={[0, Math.PI/2, 0]}>
+            <Torus args={[2, 0.3, 16, 100]} position={[0, 0, -1]}><meshStandardMaterial color="#b45309" /></Torus>
+            <Torus args={[2, 0.3, 16, 100]} position={[0, 0, 1]}><meshStandardMaterial color="#b45309" /></Torus>
+          </group>
+          <group ref={rotorRef}>
+            {Array.from({ length: 12 }).map((_, i) => (
+               <Sphere key={i} args={[0.1]} position={[Math.cos(i) * 1.2, Math.sin(i) * 1.2, 0]}>
+                  <meshStandardMaterial color="#fbbf24" emissive="#fbbf24" emissiveIntensity={2} />
+               </Sphere>
+            ))}
+          </group>
+          <Cylinder args={[0.1, 0.1, 4]} rotation={[0, 0, Math.PI/2]}><meshStandardMaterial color="#94a3b8" /></Cylinder>
+        </group>
+      )}
     </group>
   );
 }
 
-function AIPhysicsPlaceholder({ highlight }) {
+function AIMathsPlaceholder({ highlight, name, formula }) {
   const isHigh = highlight !== "none";
-  return (
-    <group>
-      <Box args={[3, 0.5, 3]} position={[0, -1.5, 0]}>
-        <meshStandardMaterial color="#475569" />
-      </Box>
-      <Torus args={[2, 0.1, 16, 100]} rotation={[Math.PI / 2, 0, 0]}>
-        <meshStandardMaterial color="#fbbf24" emissive="#fbbf24" emissiveIntensity={isHigh ? 2 : 0.5} />
-      </Torus>
-      <Cylinder args={[0.2, 0.2, 3]} position={[0, 0, 0]}>
-        <meshStandardMaterial color="#94a3b8" />
-      </Cylinder>
-    </group>
-  );
-}
+  const hash = useMemo(() => getStringHash(name || "default"), [name]);
+  const meshRef = useRef();
 
-function AIMathsPlaceholder({ highlight }) {
-  const isHigh = highlight !== "none";
+  useFrame((state) => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y = state.clock.getElapsedTime() * 0.3;
+    }
+  });
+
+  const type = hash % 3;
+
   return (
     <group>
-      <gridHelper args={[10, 10, "#f472b6", "#475569"]} />
-      <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <torusKnotGeometry args={[1.5, 0.5, 100, 16]} />
-        <meshStandardMaterial color="#f472b6" wireframe emissive="#f472b6" emissiveIntensity={isHigh ? 1 : 0} />
-      </mesh>
+      {formula && (
+        <Html position={[0, 4, 0]} center zIndexRange={[100, 0]}>
+          <div className="pointer-events-none px-6 py-3 bg-slate-900/90 backdrop-blur-2xl rounded-2xl border border-white/20 text-white font-black text-2xl tracking-widest shadow-[0_0_40px_rgba(255,255,255,0.15)] ring-1 ring-white/10 whitespace-nowrap">
+            {formula}
+          </div>
+        </Html>
+      )}
+      <gridHelper args={[10, 10, "#475569", "#1e293b"]} position={[0, -3, 0]} />
+      {type === 0 && (
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1.5, 0.5, 128, 16]} />
+          <meshStandardMaterial color="#f472b6" wireframe={hash % 2 === 0} emissive="#f472b6" emissiveIntensity={isHigh ? 1 : 0.2} transparent opacity={0.8} />
+        </mesh>
+      )}
+      {type === 1 && (
+        <mesh ref={meshRef}>
+          <sphereGeometry args={[2, 64, 64]} />
+          <meshDistortMaterial color="#f472b6" speed={3} distort={0.5} wireframe />
+        </mesh>
+      )}
+      {type === 2 && (
+        <group ref={meshRef}>
+          <axesHelper args={[5]} />
+          {Array.from({ length: 6 }).map((_, i) => (
+             <group key={i} rotation={[Math.sin(i)*Math.PI, Math.cos(i)*Math.PI, i]}>
+                <arrowHelper args={[new THREE.Vector3(1, 1, 1).normalize(), new THREE.Vector3(0,0,0), 4, 0xfbbf24, 1, 0.4]} />
+             </group>
+          ))}
+        </group>
+      )}
     </group>
   );
 }
@@ -1015,7 +1258,14 @@ const modelData = {
       category: "Molecular", 
       Component: WaterModel,
       explanation: "A polar molecule (H₂O). The oxygen atom pulls electrons more strongly than hydrogen, creating a dipole.",
-      observation: "Notice the V-shaped geometry. This 104.5° angle is caused by the repulsive force of oxygen's two lone pairs of electrons."
+      observation: "Notice the V-shaped geometry. This 104.5° angle is caused by the repulsive force of oxygen's two lone pairs of electrons.",
+      steps: [
+        { title: "Meet Water 👋", highlight: "formation", formula: "H₂O", content: "Let's observe how water forms. It brings together one Oxygen and two Hydrogen atoms." },
+        { title: "The Oxygen Atom", highlight: "atoms-O", formula: "H₂O", content: "This central red atom is Oxygen. It is highly electronegative, meaning it loves pulling electrons towards itself." },
+        { title: "The Hydrogen Atoms", highlight: "atoms-H", formula: "H₂O", content: "These two smaller white atoms are Hydrogen. They share their single electron with Oxygen to form a bond." },
+        { title: "Covalent Bonds", highlight: "bonds", formula: "H₂O", content: "These lines are polar covalent bonds. The electrons are shared, but Oxygen pulls them closer, creating a slight negative charge on Oxygen and positive on Hydrogen." },
+        { title: "Bent Geometry", highlight: "none", formula: "H₂O", content: "Notice the shape? It's not a straight line! Oxygen has two 'lone pairs' of electrons pushing the hydrogen atoms down, creating this 'Bent' V-shape with a 104.5° angle." }
+      ]
     },
     { 
       id: "c6", 
@@ -1023,7 +1273,13 @@ const modelData = {
       category: "Molecular", 
       Component: CO2Model,
       explanation: "Carbon Dioxide is a linear molecule. Despite having polar bonds, the overall molecule is non-polar due to its symmetry.",
-      observation: "Observe the double bonds (double cylinders). The atoms are perfectly aligned in a straight line (180° angle)."
+      observation: "Observe the double bonds (double cylinders). The atoms are perfectly aligned in a straight line (180° angle).",
+      steps: [
+        { title: "Meet Carbon Dioxide 👋", highlight: "formation", formula: "CO₂", content: "Carbon Dioxide is the gas we exhale, and a vital molecule for plants." },
+        { title: "The Carbon Center", highlight: "atoms-C", formula: "CO₂", content: "The central Carbon atom forms double bonds with both Oxygen atoms to fulfill its octet." },
+        { title: "Double Bonds", highlight: "bonds", formula: "CO₂", content: "Notice the thick double connections? Each consists of one sigma and one pi bond." },
+        { title: "Linear Geometry", highlight: "none", formula: "CO₂", content: "Unlike water, CO₂ has no lone pairs on the central Carbon to push the bonds around. The two double bonds repel each other exactly to opposite sides, creating a perfect 180° 'Linear' shape." }
+      ]
     },
     { 
       id: "c7", 
@@ -1031,7 +1287,13 @@ const modelData = {
       category: "Molecular", 
       Component: MethaneModel,
       explanation: "The simplest hydrocarbon (CH₄). The carbon atom undergoes sp³ hybridization to form four equivalent bonds.",
-      observation: "Rotate the model to see the tetrahedral shape. Every H-C-H bond angle is exactly 109.5°, maximizing the distance between electrons."
+      observation: "Rotate the model to see the tetrahedral shape. Every H-C-H bond angle is exactly 109.5°, maximizing the distance between electrons.",
+      steps: [
+        { title: "Meet Methane 👋", highlight: "formation", formula: "CH₄", content: "Methane is the simplest organic molecule, the main component of natural gas." },
+        { title: "The Carbon Core", highlight: "atoms-C", formula: "CH₄", content: "The central grey atom is Carbon. With 4 valence electrons, it wants to form 4 bonds to be stable." },
+        { title: "Hydrogen Companions", highlight: "atoms-H", formula: "CH₄", content: "Four Hydrogen atoms bond with Carbon, each sharing one electron." },
+        { title: "Tetrahedral Geometry", highlight: "bonds", formula: "CH₄", content: "Carbon undergoes sp³ hybridization. The 4 electron pairs repel each other equally in 3D space, forming a perfect 'Tetrahedron' with 109.5° bond angles." }
+      ]
     },
     { 
       id: "c8", 
@@ -1165,6 +1427,37 @@ function Models() {
   const getSimulationSteps = (model) => {
     if (model.steps) return model.steps;
     
+    // AI or Dynamic Step Generation
+    if (model.isAi) {
+      if (model.subject === "chemistry") {
+        return [
+          { title: `Exploring ${model.name} 👋`, highlight: "formation", formula: model.name, content: `Let's break down the molecular structure of ${model.name}. In JEE Chemistry, visualizing spatial geometry is the first step to mastering reactivity.` },
+          { title: "Central Core", highlight: "atom-0", formula: model.name, content: "This is the central atom. Its hybridization (sp, sp², sp³, etc.) determines the bond angles and the overall symmetry of the molecule." },
+          { title: "Peripheral Atoms", highlight: "atoms", formula: model.name, content: "These atoms are bonded to the center. Notice their distribution—they position themselves as far apart as possible to minimize electron repulsion (VSEPR theory)." },
+          { title: "Bonding Framework", highlight: "bonds", formula: model.name, content: "These cylinders represent covalent bonds. The strength and length of these bonds depend on the overlapping orbitals." },
+          { title: "JEE Summary 🎯", highlight: "none", formula: model.name, content: `Mastering ${model.name} involves understanding its dipole moment and symmetry. JEE Advanced often tests these concepts through coordination compounds or organic mechanisms.` }
+        ];
+      }
+      if (model.subject === "physics") {
+        return [
+          { title: `Physics of ${model.name} ⚙️`, highlight: "formation", formula: model.name, content: `Welcome! Let's examine the mechanical/electrical components of ${model.name}. Understanding the physical framework is key to solving numericals.` },
+          { title: "Primary Apparatus", highlight: "primary", formula: model.name, content: "This is the main structural component where the physical interaction occurs. Focus on the geometry and material properties." },
+          { title: "Functional Interaction", highlight: "secondary", formula: model.name, content: "Notice how these parts interact. Whether it's magnetic flux, optical refraction, or mechanical torque, this is where the physics 'happens'." },
+          { title: "Detailed Observation", highlight: "detail", formula: model.name, content: "Look closely at the movement or fields. In JEE, we often assume ideal conditions here (no friction, uniform fields)." },
+          { title: "JEE Insight 🎯", highlight: "none", formula: model.name, content: `Questions on ${model.name} usually involve conservation laws or field equations. Use this visual to map your free-body diagrams or circuit loops.` }
+        ];
+      }
+      if (model.subject === "maths") {
+        return [
+          { title: `Mathematical ${model.name} 📐`, highlight: "formation", formula: "y = f(x,z)", content: `Let's visualize the geometric properties of ${model.name}. Spatial reasoning is a massive advantage in JEE Calculus and Geometry.` },
+          { title: "Primary Geometry", highlight: "primary", formula: "z = f(x,y)", content: "This is the core locus or surface. Every point follows a specific coordinate equation." },
+          { title: "Skeleton & Planes", highlight: "secondary", formula: "P(x,y,z)", content: "Notice the grid and skeletal structure. This helps us understand the boundaries and symmetry of the function." },
+          { title: "Vertex & Critical Points", highlight: "detail", formula: "df/dx = 0", content: "Focus on the extreme points or vertices. These are often the 'answer' in optimization or coordinate geometry problems." },
+          { title: "JEE Mastery 🎯", highlight: "none", formula: "QED", content: `Visualizing ${model.name} helps you solve complex integration or 3D geometry problems without getting lost in the algebra.` }
+        ];
+      }
+    }
+
     const expl = model.explanation || `This visualizes the concepts of ${model.category}.`;
     const obs = model.observation || `Zoom in and rotate to observe the spatial properties.`;
     
@@ -1251,8 +1544,8 @@ function Models() {
       subject,
       isAi: true,
       Component: AiComp,
-      explanation: `This is an AI-generated procedural model for ${name}. It uses subject-specific geometric approximations to visualize the concept.`,
-      observation: `Observe the unique spatial arrangement generated for ${name}. Rotate the model to explore its structure from different angles.`
+      explanation: `This model provides a procedural visualization of ${name} within the context of JEE ${subject}. It is designed to help you map theoretical equations to a spatial framework.`,
+      observation: `The geometry highlights the symmetry and spatial distribution of ${name}. In the exam, use this mental image to determine ${subject === 'chemistry' ? 'bond polarities and geometries' : subject === 'physics' ? 'vector fields and force directions' : 'function limits and surface boundaries'}.`
     };
 
     setCustomModels(prev => [...prev, newModel]);
@@ -1364,7 +1657,11 @@ function Models() {
                 <Suspense fallback={null}>
                   <Float speed={1.5} rotationIntensity={0.5} floatIntensity={0.5}>
                     <Center>
-                      <ActiveModel highlight={isSimulating ? getSimulationSteps(currentModel)[simStep].highlight : "none"} />
+                      <ActiveModel 
+                        highlight={isSimulating ? getSimulationSteps(currentModel)[simStep].highlight : "none"} 
+                        formula={isSimulating ? getSimulationSteps(currentModel)[simStep].formula : undefined}
+                        name={currentModel.name}
+                      />
                     </Center>
                   </Float>
                   <OrbitControls enablePan={false} minDistance={2} maxDistance={20} />
@@ -1442,6 +1739,31 @@ function Models() {
                          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                            <p className="text-xs font-bold leading-relaxed text-slate-400">
                              {currentModel.observation}
+                           </p>
+                         </div>
+                       </section>
+
+                       <section>
+                         <h4 className="text-[11px] font-black uppercase text-slate-500 tracking-widest mb-3">Parts Explained</h4>
+                         <div className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3">
+                           <div className="flex items-center gap-3">
+                              <div className={`h-2 w-2 rounded-full ${meta.color} bg-current`} />
+                              <p className="text-[10px] font-black text-white uppercase tracking-wider">Main Body</p>
+                           </div>
+                           <p className="text-[11px] font-bold text-slate-400 leading-tight">The primary structure that defines the physical or mathematical locus.</p>
+                           <div className="flex items-center gap-3 pt-2">
+                              <div className="h-2 w-2 rounded-full bg-slate-500" />
+                              <p className="text-[10px] font-black text-white uppercase tracking-wider">Connectors/Skeleton</p>
+                           </div>
+                           <p className="text-[11px] font-bold text-slate-400 leading-tight">The framework providing support and showing internal symmetry.</p>
+                         </div>
+                       </section>
+
+                       <section>
+                         <h4 className="text-[11px] font-black uppercase text-slate-500 tracking-widest mb-3">JEE Relevance</h4>
+                         <div className="rounded-2xl border border-teal-500/20 bg-teal-500/5 p-4">
+                           <p className="text-xs font-bold leading-relaxed text-teal-400">
+                             Mastering this visualization allows you to solve advanced problems on {currentModel.name} by correctly mapping the theory to spatial vectors and equations.
                            </p>
                          </div>
                        </section>
@@ -1529,7 +1851,11 @@ function Models() {
                   <Suspense fallback={null}>
                     <Float speed={1.5} rotationIntensity={0.5} floatIntensity={0.5}>
                       <Center>
-                        <ActiveModel highlight={getSimulationSteps(currentModel)[simStep].highlight} />
+                        <ActiveModel 
+                          highlight={getSimulationSteps(currentModel)[simStep].highlight} 
+                          formula={getSimulationSteps(currentModel)[simStep].formula}
+                          name={currentModel.name}
+                        />
                       </Center>
                     </Float>
                     <OrbitControls enablePan={false} minDistance={2} maxDistance={20} />
