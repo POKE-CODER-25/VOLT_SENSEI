@@ -396,9 +396,20 @@ export async function getCustomFormulae(uid, subject) {
     where("subject", "==", subject),
   );
   const snapshot = await getDocs(formulaeQuery);
-  return snapshot.docs
+  const allFormulae = snapshot.docs
     .map(item => ({ id: item.id, ...item.data() }))
     .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+
+  // Deduplicate in memory
+  const finalUnique = [];
+  const seen = new Set();
+  for (const f of allFormulae) {
+    if (!seen.has(f.name)) {
+      finalUnique.push(f);
+      seen.add(f.name);
+    }
+  }
+  return finalUnique;
 }
 
 export async function saveCustomModel(uid, model, subject) {

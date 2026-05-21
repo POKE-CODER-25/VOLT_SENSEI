@@ -82,8 +82,8 @@ function Quiz() {
 
   const results = useMemo(() => {
     const correct = answers.filter((answer) => answer.isCorrect).length;
-    const total = questions.length || 1;
-    const accuracy = Math.round((correct / total) * 100);
+    const total = questions.length || 0;
+    const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
     const weakAreas = answers
       .filter((answer) => !answer.isCorrect)
       .map((answer) => answer.topic)
@@ -91,9 +91,9 @@ function Quiz() {
     const timeSpent = startedAt ? Math.round((Date.now() - startedAt) / 1000) : 0;
     
     let xpEarned = answers.reduce((sum, answer) => sum + (answer.isCorrect ? answer.xpReward : 0), 0);
-    if (accuracy === 100) xpEarned += 250;
-    else if (accuracy >= 80) xpEarned += 100;
-    if (difficulty === "JEE Advanced") xpEarned += 150;
+    if (accuracy === 100 && total > 0) xpEarned += 250;
+    else if (accuracy >= 80 && total > 0) xpEarned += 100;
+    if (difficulty === "JEE Advanced" && total > 0) xpEarned += 150;
 
     return {
       correct,
@@ -102,7 +102,7 @@ function Quiz() {
       weakAreas: [...new Set(weakAreas)],
       timeSpent,
       xpEarned,
-      strongestTopic: accuracy >= 70 ? topic : "Needs revision",
+      strongestTopic: accuracy >= 70 && total > 0 ? topic : "Needs revision",
       weakestTopic: weakAreas[0] || "None detected",
       averageResponseTime: answers.length ? Math.round(answers.reduce((sum, answer) => sum + answer.responseTime, 0) / answers.length) : 0,
     };
@@ -163,7 +163,7 @@ function Quiz() {
     setPhase("results");
     if (activeTimerRef.current) clearInterval(activeTimerRef.current);
 
-    if (!currentUser) return;
+    if (!currentUser || questions.length === 0) return;
 
     const correct = finalAnswers.filter((answer) => answer.isCorrect).length;
     const accuracy = Math.round((correct / questions.length) * 100);
