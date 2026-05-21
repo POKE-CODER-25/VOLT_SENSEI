@@ -193,12 +193,33 @@ export async function saveQuizAttempt(uid, attempt) {
   // Let's implement a simplified daily 60min rule.
   
   let newStreak = userData.streak || 1;
-  const today = new Date().toISOString().split("T")[0];
+  const now = new Date();
+  const today = now.toISOString().split("T")[0];
   const lastActiveDate = userData.lastActiveDate || "";
-  const dailyStudyTime = lastActiveDate === today ? (userData.dailyStudyTime || 0) + timeSpentMins : timeSpentMins;
+  
+  // Calculate yesterday's date string
+  const yesterdayDate = new Date(now);
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+  const yesterday = yesterdayDate.toISOString().split("T")[0];
 
-  if (lastActiveDate !== today && dailyStudyTime >= 60) {
-    newStreak += 1;
+  const dailyStudyTime = lastActiveDate === today ? (userData.dailyStudyTime || 0) + timeSpentMins : timeSpentMins;
+  const previousDailyStudyTime = lastActiveDate === today ? (userData.dailyStudyTime || 0) : 0;
+
+  // Streak Logic:
+  // 1. If last active was yesterday, and we just hit 60 mins today -> increment
+  // 2. If last active was today, and we just hit 60 mins (was below 60 before) -> increment
+  // 3. If last active was more than 1 day ago -> reset to 1 (or 0 if not studied 60m yet)
+  
+  if (lastActiveDate === yesterday) {
+    if (previousDailyStudyTime < 60 && dailyStudyTime >= 60) {
+      newStreak += 1;
+    }
+  } else if (lastActiveDate === today) {
+    if (previousDailyStudyTime < 60 && dailyStudyTime >= 60) {
+      newStreak += 1;
+    }
+  } else if (lastActiveDate !== "" && lastActiveDate !== yesterday && lastActiveDate !== today) {
+    newStreak = dailyStudyTime >= 60 ? 1 : 0;
   }
 
   const roadmapKey = {
@@ -261,7 +282,7 @@ export function subscribeToChatHistory(uid, callback, maxItems = 12) {
   if (!uid) return () => {};
 
   const chatQuery = query(
-    collection(db, "chatHistory"),
+    collection(db, "chatMessages"),
     where("uid", "==", uid),
     limit(maxItems),
   );

@@ -57,6 +57,10 @@ function Quiz() {
   }, [subjectKey]);
 
   const handleSubjectChange = (key) => {
+    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+    if (activeTimerRef.current) clearInterval(activeTimerRef.current);
+    if (transitionTimeoutRef.current) clearTimeout(transitionTimeoutRef.current);
+    
     setSearchParams({ subject: key });
     setPhase("setup");
     setError("");
@@ -104,6 +108,18 @@ function Quiz() {
     };
   }, [answers, questions.length, startedAt, topic, difficulty]);
 
+  const countdownIntervalRef = useRef(null);
+  const activeTimerRef = useRef(null);
+  const transitionTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+      if (activeTimerRef.current) clearInterval(activeTimerRef.current);
+      if (transitionTimeoutRef.current) clearTimeout(transitionTimeoutRef.current);
+    };
+  }, []);
+
   const startQuiz = async () => {
     setLoading(true);
     setError("");
@@ -122,10 +138,11 @@ function Quiz() {
       setCountdown(3);
       setPhase("countdown");
 
-      const countdownTimer = window.setInterval(() => {
+      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = window.setInterval(() => {
         setCountdown((value) => {
           if (value <= 1) {
-            window.clearInterval(countdownTimer);
+            if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
             setStartedAt(Date.now());
             setTimeLeft(getTimeLimit(difficulty));
             setPhase("active");
@@ -144,6 +161,7 @@ function Quiz() {
 
   const finishQuiz = async (finalAnswers = answers) => {
     setPhase("results");
+    if (activeTimerRef.current) clearInterval(activeTimerRef.current);
 
     if (!currentUser) return;
 
@@ -209,7 +227,8 @@ function Quiz() {
     setSelected(option);
     setAnswers(nextAnswers);
 
-    window.setTimeout(() => {
+    if (transitionTimeoutRef.current) clearTimeout(transitionTimeoutRef.current);
+    transitionTimeoutRef.current = window.setTimeout(() => {
       if (step === questions.length - 1) {
         finishQuiz(nextAnswers);
       } else {
@@ -223,10 +242,11 @@ function Quiz() {
   useEffect(() => {
     if (phase !== "active" || selected) return undefined;
 
-    const timer = window.setInterval(() => {
+    if (activeTimerRef.current) clearInterval(activeTimerRef.current);
+    activeTimerRef.current = window.setInterval(() => {
       setTimeLeft((value) => {
         if (value <= 1) {
-          window.clearInterval(timer);
+          if (activeTimerRef.current) clearInterval(activeTimerRef.current);
           chooseOption("__TIMEOUT__");
           return 0;
         }
@@ -234,7 +254,9 @@ function Quiz() {
       });
     }, 1000);
 
-    return () => window.clearInterval(timer);
+    return () => {
+      if (activeTimerRef.current) clearInterval(activeTimerRef.current);
+    };
   }, [phase, selected, step]);
 
   return (

@@ -328,7 +328,7 @@ function Learn() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-72 border-r border-white/10 flex flex-col bg-slate-900/90 backdrop-blur-xl shrink-0 transition-transform duration-300 lg:relative lg:translate-x-0 lg:z-0 lg:w-80 lg:bg-slate-900/50 ${
+        className={`fixed inset-y-0 left-0 z-50 w-[80%] max-w-72 border-r border-white/10 flex flex-col bg-slate-900/90 backdrop-blur-xl shrink-0 transition-transform duration-300 lg:relative lg:translate-x-0 lg:z-0 lg:w-80 lg:bg-slate-900/50 ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -418,28 +418,28 @@ function Learn() {
         </header>
 
         {/* Chat Messages */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar pb-32">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 md:space-y-6 custom-scrollbar pb-32">
           {messages.map((msg) => (
             <motion.div
               key={msg.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className={`flex gap-4 ${msg.role === "student" ? "flex-row-reverse" : ""} ${msg.isStreaming && !msg.text ? "hidden" : ""}`}
+              className={`flex gap-3 md:gap-4 ${msg.role === "student" ? "flex-row-reverse" : ""} ${msg.isStreaming && !msg.text ? "hidden" : ""}`}
             >
-              <div className={`w-10 h-10 rounded-xl shrink-0 flex items-center justify-center ${
+              <div className={`w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl shrink-0 flex items-center justify-center ${
                 msg.role === "student" ? "bg-white/10" : config.bg
               }`}>
-                {msg.role === "student" ? <UserRound size={20} /> : <config.icon className={config.theme} size={20} />}
+                {msg.role === "student" ? <UserRound size={16} className="md:w-5 md:h-5" /> : <config.icon className={config.theme} size={16} className="md:w-5 md:h-5" />}
               </div>
-              <div className={`max-w-[80%] space-y-2 ${msg.role === "student" ? "text-right" : ""}`}>
-                <div className={`inline-block p-4 rounded-2xl border text-sm leading-relaxed ${
+              <div className={`max-w-[85%] md:max-w-[80%] space-y-2 ${msg.role === "student" ? "text-right" : ""}`}>
+                <div className={`inline-block p-3 md:p-4 rounded-xl md:rounded-2xl border text-[13px] md:text-sm leading-relaxed ${
                   msg.role === "student" 
                     ? "bg-white/5 border-white/10 rounded-tr-none" 
                     : `${config.bg} ${config.border} rounded-tl-none`
                 }`}>
                   <MarkdownMessage text={msg.text} />
                 </div>
-                <div className="flex items-center gap-3 text-[10px] font-black uppercase text-slate-500">
+                <div className="flex items-center gap-3 text-[9px] md:text-[10px] font-black uppercase text-slate-500">
                   <span>{msg.timestamp}</span>
                   {msg.role === "ai" && !msg.isStreaming && (
                     <div className="flex gap-2">
@@ -453,11 +453,11 @@ function Learn() {
             </motion.div>
           ))}
           {isThinking && (
-            <div className="flex gap-4">
-              <div className={`w-10 h-10 rounded-xl shrink-0 flex items-center justify-center ${config.bg}`}>
-                <Loader2 className={`animate-spin ${config.theme}`} size={20} />
+            <div className="flex gap-3 md:gap-4">
+              <div className={`w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl shrink-0 flex items-center justify-center ${config.bg}`}>
+                <Loader2 className={`animate-spin ${config.theme}`} size={16} className="md:w-5 md:h-5" />
               </div>
-              <div className="p-4 rounded-2xl border bg-white/5 border-white/10 italic text-sm text-slate-500">
+              <div className="p-3 md:p-4 rounded-xl md:rounded-2xl border bg-white/5 border-white/10 italic text-[13px] md:text-sm text-slate-500">
                 Thinking...
               </div>
             </div>
@@ -466,29 +466,29 @@ function Learn() {
         </div>
 
         {/* Input Area */}
-        <div className="absolute bottom-0 inset-x-0 p-6 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent pointer-events-none">
+        <div className="absolute bottom-0 inset-x-0 p-4 md:p-6 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent pointer-events-none">
           <div className="max-w-4xl mx-auto relative group pointer-events-auto flex flex-col items-center">
             <div className="w-full relative">
-              <div className={`absolute -inset-0.5 bg-gradient-to-r ${config.gradient} rounded-2xl opacity-50 blur group-focus-within:opacity-100 transition duration-500`} />
-              <div className="relative flex bg-slate-900 border border-white/10 rounded-2xl overflow-hidden focus-within:border-white/20 transition">
+              <div className={`absolute -inset-0.5 bg-gradient-to-r ${config.gradient} rounded-xl md:rounded-2xl opacity-50 blur group-focus-within:opacity-100 transition duration-500`} />
+              <div className="relative flex bg-slate-900 border border-white/10 rounded-xl md:rounded-2xl overflow-hidden focus-within:border-white/20 transition">
                 <input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && sendMessage()}
                   disabled={isThinking}
-                  placeholder={isThinking ? "Volt Sensei is thinking..." : `Ask ${config.title} anything...`}
-                  className="flex-1 bg-transparent px-6 py-4 outline-none text-sm disabled:opacity-50"
+                  placeholder={isThinking ? "Thinking..." : `Ask ${config.title}...`}
+                  className="flex-1 bg-transparent px-4 md:px-6 py-3 md:py-4 outline-none text-xs md:text-sm disabled:opacity-50"
                 />
                 <button
                   onClick={sendMessage}
                   disabled={!input.trim() || isThinking}
-                  className={`px-6 flex items-center justify-center transition disabled:opacity-30 ${config.theme}`}
+                  className={`px-4 md:px-6 flex items-center justify-center transition disabled:opacity-30 ${config.theme}`}
                 >
-                  {isThinking ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
+                  {isThinking ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
                 </button>
               </div>
             </div>
-            <p className="text-center text-[10px] text-slate-600 font-black uppercase tracking-widest mt-4">
+            <p className="text-center text-[8px] md:text-[10px] text-slate-600 font-black uppercase tracking-widest mt-2 md:mt-4">
               JEE Mastery System • Powered by Groq AI
             </p>
           </div>

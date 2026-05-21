@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera, Float, MeshDistortMaterial, Sphere, Box, Torus, Center, Cylinder, Html } from "@react-three/drei";
-import { Search, Box as BoxIcon, Shapes, Layers, Play, Info, RotateCcw, X, Sparkles } from "lucide-react";
+import { Search, Box as BoxIcon, Shapes, Layers, Play, Info, RotateCcw, X, Sparkles, Menu } from "lucide-react";
 import PageHeader from "../components/common/PageHeader";
 import { askVoltSensei } from "../services/groq";
 import * as THREE from "three";
@@ -1423,6 +1423,18 @@ function Models() {
   const [isSimulating, setIsSimulating] = useState(false);
   const [simStep, setSimStep] = useState(0);
   const [customModels, setCustomModels] = useState([]);
+  const [showGallery, setShowGallery] = useState(false);
+  const [isMobile, setIsMobile] = useState(isMobile);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = isMobile;
+      setIsMobile(mobile);
+      if (!mobile) setShowGallery(false);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const getSimulationSteps = (model) => {
     if (model.steps) return model.steps;
@@ -1574,78 +1586,121 @@ function Models() {
       />
 
       <div className="mx-auto max-w-[1600px] px-4 md:px-8">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-          
-          {/* Left: Model Grid Selection */}
-          <div className="lg:col-span-4 space-y-6">
-            <div className="relative group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-white transition-colors" size={18} />
-              <input
-                type="text"
-                placeholder="Search models..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-2xl border border-white/10 bg-white/5 py-4 pl-12 pr-4 text-sm font-medium outline-none focus:border-white/20 transition-all"
-              />
+        {/* Mobile Gallery Toggle */}
+        <div className="mb-4 flex lg:hidden">
+          <button
+            onClick={() => setShowGallery(true)}
+            className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-4 text-slate-300 transition hover:bg-white/10"
+          >
+            <div className="flex items-center gap-3">
+              <Menu size={20} />
+              <span className="text-sm font-black uppercase tracking-widest">Browse Models</span>
             </div>
+            <span className="text-[10px] font-bold text-slate-500">{filteredModels.length} Models</span>
+          </button>
+        </div>
 
-            <div className="premium-surface max-h-[700px] overflow-y-auto rounded-[2.5rem] border border-white/10 p-4 custom-scrollbar">
-              <div className="px-2 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500">
-                Model Gallery
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                {filteredModels.map((model) => (
-                  <button
-                    key={model.id}
-                    onClick={() => {
-                      setSelectedModel(model);
-                      setShowConcept(false);
-                    }}
-                    className={`group relative flex flex-col items-center rounded-2xl p-4 text-center transition-all ${
-                      currentModel.id === model.id 
-                        ? "bg-white/10 ring-1 ring-white/20" 
-                        : "bg-white/[0.02] hover:bg-white/5"
-                    }`}
-                  >
-                    {model.isAi && (
-                      <div className="absolute top-2 right-2 rounded-full bg-electric/20 px-1.5 py-0.5 text-[7px] font-black uppercase text-electric ring-1 ring-electric/30">
-                        AI
-                      </div>
-                    )}
-                    <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 transition-transform group-hover:scale-110 ${currentModel.id === model.id ? meta.color : "text-slate-400"}`}>
-                      {model.isAi ? <Sparkles size={18} className="text-electric" /> : <BoxIcon size={20} />}
-                    </div>
-                    <span className={`text-[11px] font-black leading-tight ${currentModel.id === model.id ? "text-white" : "text-slate-400 group-hover:text-slate-200"}`}>
-                      {model.name}
-                    </span>
-                  </button>
-                ))}
-                
-                {filteredModels.length === 0 && searchQuery && (
-                  <button
-                    onClick={generateAiModel}
-                    className="col-span-2 group flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/20 bg-white/5 p-8 text-center transition-all hover:bg-white/10 hover:border-electric"
-                  >
-                    <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-electric/10 text-electric shadow-[0_0_20px_rgba(0,245,255,0.15)] group-hover:scale-110 transition-transform">
-                      <Sparkles size={28} />
-                    </div>
-                    <p className="text-sm font-black text-white">Generate model</p>
-                    <p className="mt-1 text-[11px] font-bold text-slate-500">"{searchQuery}"</p>
-                  </button>
-                )}
-
-                {filteredModels.length === 0 && !searchQuery && (
-                  <div className="col-span-2 p-8 text-center text-sm font-medium text-slate-500">
-                    No models found.
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 relative">
+          
+          {/* Left: Model Grid Selection (Collapsible on Mobile) */}
+          <AnimatePresence>
+            {(!isMobile || showGallery) && (
+              <motion.div 
+                initial={isMobile ? { x: -300, opacity: 0 } : false}
+                animate={{ x: 0, opacity: 1 }}
+                exit={isMobile ? { x: -300, opacity: 0 } : false}
+                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                className={`${
+                  isMobile 
+                    ? "fixed inset-y-0 left-0 z-[60] w-[85%] bg-slate-950 p-6 shadow-2xl overflow-y-auto" 
+                    : "lg:col-span-4 space-y-6"
+                }`}
+              >
+                {isMobile && (
+                  <div className="mb-8 flex items-center justify-between">
+                    <h3 className="text-xl font-black text-white">Model Gallery</h3>
+                    <button onClick={() => setShowGallery(false)} className="rounded-xl bg-white/5 p-2 text-slate-400">
+                      <X size={20} />
+                    </button>
                   </div>
                 )}
-              </div>
-            </div>
-          </div>
+
+                <div className="relative group">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-white transition-colors" size={18} />
+                  <input
+                    type="text"
+                    placeholder="Search models..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full rounded-2xl border border-white/10 bg-white/5 py-4 pl-12 pr-4 text-sm font-medium outline-none focus:border-white/20 transition-all"
+                  />
+                </div>
+
+                <div className="premium-surface lg:max-h-[700px] rounded-[2.5rem] border border-white/10 p-4 custom-scrollbar">
+                  <div className="px-2 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                    Model Gallery
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 pb-20 lg:pb-0">
+                    {filteredModels.map((model) => (
+                      <button
+                        key={model.id}
+                        onClick={() => {
+                          setSelectedModel(model);
+                          setShowConcept(false);
+                          if (isMobile) setShowGallery(false);
+                        }}
+                        className={`group relative flex flex-col items-center rounded-2xl p-4 text-center transition-all ${
+                          currentModel.id === model.id 
+                            ? "bg-white/10 ring-1 ring-white/20" 
+                            : "bg-white/[0.02] hover:bg-white/5"
+                        }`}
+                      >
+                        {model.isAi && (
+                          <div className="absolute top-2 right-2 rounded-full bg-electric/20 px-1.5 py-0.5 text-[7px] font-black uppercase text-electric ring-1 ring-electric/30">
+                            AI
+                          </div>
+                        )}
+                        <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 transition-transform group-hover:scale-110 ${currentModel.id === model.id ? meta.color : "text-slate-400"}`}>
+                          {model.isAi ? <Sparkles size={18} className="text-electric" /> : <BoxIcon size={20} />}
+                        </div>
+                        <span className={`text-[11px] font-black leading-tight ${currentModel.id === model.id ? "text-white" : "text-slate-400 group-hover:text-slate-200"}`}>
+                          {model.name}
+                        </span>
+                      </button>
+                    ))}
+                    
+                    {filteredModels.length === 0 && searchQuery && (
+                      <button
+                        onClick={generateAiModel}
+                        className="col-span-2 group flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/20 bg-white/5 p-8 text-center transition-all hover:bg-white/10 hover:border-electric"
+                      >
+                        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-electric/10 text-electric shadow-[0_0_20px_rgba(0,245,255,0.15)] group-hover:scale-110 transition-transform">
+                          <Sparkles size={28} />
+                        </div>
+                        <p className="text-sm font-black text-white">Generate model</p>
+                        <p className="mt-1 text-[11px] font-bold text-slate-500">"{searchQuery}"</p>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Backdrop for mobile drawer */}
+          {showGallery && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowGallery(false)}
+              className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm lg:hidden"
+            />
+          )}
 
           {/* Right: Viewer Area */}
           <div className="lg:col-span-8 space-y-6">
-            <div className="relative aspect-video lg:aspect-auto lg:h-[750px] overflow-hidden rounded-[3rem] border border-white/10 bg-slate-900/40 backdrop-blur-3xl shadow-2xl">
+            <div className="relative aspect-[4/5] sm:aspect-video lg:aspect-auto lg:h-[750px] overflow-hidden rounded-[3rem] border border-white/10 bg-slate-900/40 backdrop-blur-3xl shadow-2xl">
               <div className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.03)_0%,transparent_70%)]" />
               
               <Canvas shadows>
@@ -1669,38 +1724,38 @@ function Models() {
               </Canvas>
 
               {/* Viewer UI Overlays */}
-              <div className="absolute top-8 left-8 z-10">
+              <div className="absolute top-4 left-4 sm:top-8 sm:left-8 z-10">
                 <motion.div
                   key={currentModel.id}
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="rounded-2xl border border-white/10 bg-black/40 p-5 backdrop-blur-xl"
+                  className="rounded-xl sm:rounded-2xl border border-white/10 bg-black/60 p-3 sm:p-5 backdrop-blur-xl"
                 >
-                  <h3 className="text-xl font-black text-white">{currentModel.name}</h3>
-                  <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-wider">{currentModel.category}</p>
+                  <h3 className="text-sm sm:text-xl font-black text-white">{currentModel.name}</h3>
+                  <p className="text-[9px] sm:text-xs font-bold text-slate-400 mt-0.5 sm:mt-1 uppercase tracking-wider">{currentModel.category}</p>
                 </motion.div>
               </div>
 
-              <div className="absolute bottom-8 right-8 z-10 flex items-center gap-3">
+              <div className="absolute bottom-4 right-4 sm:bottom-8 sm:right-8 z-10 flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-3">
                 <button 
                   onClick={() => { setIsSimulating(true); setSimStep(0); setShowConcept(false); }}
-                  className="flex items-center gap-3 rounded-2xl bg-white px-6 py-3 text-sm font-black text-slate-950 transition hover:bg-slate-200 shadow-lg"
+                  className="flex items-center gap-2 sm:gap-3 rounded-xl sm:rounded-2xl bg-white px-4 py-2.5 sm:px-6 sm:py-3 text-xs sm:text-sm font-black text-slate-950 transition hover:bg-slate-200 shadow-lg active:scale-95"
                 >
-                  <Play size={18} fill="currentColor" />
+                  <Play size={14} className="sm:w-[18px] sm:h-[18px]" fill="currentColor" />
                   Simulate
                 </button>
               </div>
 
-              <div className="absolute bottom-8 left-8 z-10">
+              <div className="absolute bottom-4 left-4 sm:bottom-8 sm:left-8 z-10">
                  <button 
                   onClick={() => setShowConcept(!showConcept)}
-                  className={`flex items-center gap-2 rounded-2xl border px-4 py-3 text-[11px] font-black uppercase tracking-widest transition backdrop-blur-xl ${
+                  className={`flex items-center gap-2 rounded-xl sm:rounded-2xl border px-3 py-2.5 sm:px-4 sm:py-3 text-[9px] sm:text-[11px] font-black uppercase tracking-widest transition backdrop-blur-xl active:scale-95 ${
                     showConcept 
                       ? "border-white/40 bg-white text-slate-950" 
-                      : "border-white/10 bg-black/40 text-slate-300 hover:text-white"
+                      : "border-white/10 bg-black/60 text-slate-300 hover:text-white"
                   }`}
                  >
-                   <Info size={14} /> {showConcept ? "Close Concept" : "View Concept"}
+                   <Info size={12} className="sm:w-[14px] sm:h-[14px]" /> {showConcept ? "Close" : "Concept"}
                  </button>
               </div>
 
@@ -1839,9 +1894,9 @@ function Models() {
             </header>
             
             {/* Main Content */}
-            <div className="flex flex-1 overflow-hidden">
+            <div className="flex flex-1 flex-col lg:flex-row overflow-hidden">
               {/* 3D Viewer */}
-              <div className="relative flex-1 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.03)_0%,transparent_70%)]">
+              <div className="relative flex-1 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.03)_0%,transparent_70%)] h-1/2 lg:h-auto">
                 <Canvas shadows>
                   <PerspectiveCamera makeDefault position={[0, 0, 8]} fov={45} />
                   <ambientLight intensity={0.5} />
@@ -1858,13 +1913,13 @@ function Models() {
                         />
                       </Center>
                     </Float>
-                    <OrbitControls enablePan={false} minDistance={2} maxDistance={20} />
+                    <OrbitControls enablePan={false} minDistance={2} maxDistance={20} makeDefault />
                   </Suspense>
                 </Canvas>
               </div>
 
               {/* Steps Panel */}
-              <div className="w-96 shrink-0 border-l border-white/10 bg-slate-900/50 p-8 backdrop-blur-md flex flex-col overflow-y-auto">
+              <div className="w-full lg:w-96 shrink-0 border-t lg:border-t-0 lg:border-l border-white/10 bg-slate-900/50 p-6 lg:p-8 backdrop-blur-md flex flex-col overflow-y-auto h-1/2 lg:h-auto">
                 <div className="mb-6 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-500">
                   <span>Step {simStep + 1} of {getSimulationSteps(currentModel).length}</span>
                 </div>
