@@ -1,3 +1,4 @@
+import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Atom, Calculator, Cpu, Sparkles, BookOpen, Search, Filter, ChevronRight, Loader2, Info, Zap, X } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
@@ -483,12 +484,7 @@ function Formulae() {
             return (
               <button
                 key={sub.id}
-                onClick={() => {
-                  setActiveSubject(sub.id);
-                  setAiGeneratedFormula(null);
-                  setSearchQuery("");
-                  setSelectedElement(null);
-                }}
+                onClick={() => handleSubjectChange(sub.id)}
                 className={`relative group flex items-center gap-3 px-8 py-4 rounded-2xl border transition-all duration-300 ${
                   isActive 
                     ? `${sub.border} ${sub.bg} ${sub.glow} border-white/20` 
