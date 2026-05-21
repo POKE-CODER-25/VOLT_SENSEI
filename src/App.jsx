@@ -3,6 +3,7 @@ import AppLayout from "./components/layout/AppLayout";
 import ProtectedRoute from "./components/routing/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 import Dashboard from "./pages/Dashboard";
+import Formulae from "./pages/Formulae";
 import Home from "./pages/Home";
 import Learn from "./pages/Learn";
 import Login from "./pages/Login";
@@ -25,6 +26,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/formulae"
+              element={
+                <ProtectedRoute>
+                  <Formulae />
                 </ProtectedRoute>
               }
             />

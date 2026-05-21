@@ -157,6 +157,9 @@ function Navbar() {
           <NavLink to="/quiz" className={navLinkClass}>
             Battle Ground
           </NavLink>
+          <NavLink to="/formulae" className={navLinkClass}>
+            Formulae
+          </NavLink>
           <NavLink to="/dashboard" className={navLinkClass}>
             XP Level
           </NavLink>
@@ -222,6 +225,9 @@ function Navbar() {
               <SenseiDropdown isMobile={true} closeMobileMenu={() => setIsOpen(false)} />
               <NavLink to="/quiz" className={navLinkClass} onClick={() => setIsOpen(false)}>
                 Battle Ground
+              </NavLink>
+              <NavLink to="/formulae" className={navLinkClass} onClick={() => setIsOpen(false)}>
+                Formulae
               </NavLink>
               <NavLink to="/dashboard" className={navLinkClass} onClick={() => setIsOpen(false)}>
                 XP Level
