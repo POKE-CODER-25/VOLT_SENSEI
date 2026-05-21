@@ -552,14 +552,14 @@ function Formulae() {
                      <Sparkles size={16} className="text-electric" />
                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">AI Generated Result</span>
                    </div>
-                   <FormulaCard formula={aiGeneratedFormula} theme={config.color} border={config.border} />
+                   <FormulaCard formula={aiGeneratedFormula} theme={config.color} border={config.border} subject={activeSubject} />
                 </div>
               )}
 
               {/* Formula Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredFormulae.map((f) => (
-                  <FormulaCard key={f.id} formula={f} theme={config.color} border={config.border} />
+                  <FormulaCard key={f.id} formula={f} theme={config.color} border={config.border} subject={activeSubject} />
                 ))}
               </div>
 
@@ -582,49 +582,69 @@ function Formulae() {
   );
 }
 
-function FormulaCard({ formula, theme, border }) {
+function FormulaCard({ formula, theme, border, subject }) {
+  const isAi = formula.isAi;
+  
+  // Logic for detail title and content
+  let detailTitle = "Variables";
+  let detailContent = formula.variables;
+
+  if (isAi && formula.detailTitle) {
+    detailTitle = formula.detailTitle;
+    detailContent = formula.detailContent;
+  } else {
+    // Default fallback for subject-specific local data
+    if (subject === "maths" || formula.graph) {
+      detailTitle = "Graph Meaning";
+      detailContent = formula.graph || formula.variables;
+    } else if (subject === "chemistry") {
+      detailTitle = "Molecular Structure";
+      detailContent = formula.variables;
+    }
+  }
+
   return (
     <motion.div
       layout
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      className={`group relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.02] p-6 transition-all hover:bg-white/[0.04] hover:border-white/20`}
+      className={`group relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.02] p-6 transition-all hover:bg-white/[0.04] hover:border-white/20 h-full flex flex-col`}
     >
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-black text-white group-hover:text-electric transition-colors">{formula.name}</h3>
-        {formula.isAi && <div className="rounded-full bg-electric/20 px-2 py-0.5 text-[8px] font-black text-electric ring-1 ring-electric/30">AI</div>}
+        <h3 className="text-lg font-black text-white group-hover:text-electric transition-colors line-clamp-1">{formula.name}</h3>
+        {isAi && <div className="rounded-full bg-electric/20 px-2 py-0.5 text-[8px] font-black text-electric ring-1 ring-electric/30">AI</div>}
       </div>
 
-      <div className="mb-6 rounded-2xl bg-black/40 p-5 text-center border border-white/5 shadow-inner">
-        <p className={`text-2xl font-black tracking-wider ${theme}`}>{formula.formula}</p>
+      <div className="mb-6 rounded-2xl bg-black/40 p-5 text-center border border-white/5 shadow-inner min-h-[100px] flex items-center justify-center">
+        <p className={`text-xl md:text-2xl font-black tracking-wider ${theme} break-words line-clamp-2`}>{formula.formula}</p>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-4 flex-1">
         <div>
           <p className="text-[9px] font-black uppercase text-slate-500 tracking-widest mb-1 flex items-center gap-1.5">
-            <Info size={10} /> {formula.graph ? 'Graph Relevance' : 'Variables'}
+            <Info size={10} /> {detailTitle}
           </p>
-          <p className="text-xs font-medium text-slate-300 leading-relaxed">{formula.graph || formula.variables}</p>
+          <p className="text-xs font-medium text-slate-300 leading-relaxed line-clamp-3">{detailContent}</p>
         </div>
 
         <div>
           <p className="text-[9px] font-black uppercase text-slate-500 tracking-widest mb-1">Explanation</p>
-          <p className="text-xs font-medium text-slate-400 leading-relaxed">{formula.explanation}</p>
+          <p className="text-xs font-medium text-slate-400 leading-relaxed line-clamp-3">{formula.explanation}</p>
         </div>
+      </div>
 
-        <div className="pt-4 border-t border-white/5 mt-2 space-y-3">
-          <div className="flex items-start gap-3">
-             <div className="mt-1 h-1.5 w-1.5 rounded-full bg-slate-700 shrink-0" />
-             <p className="text-[11px] font-bold text-slate-400">
-               <span className="text-white">Usage:</span> {formula.usage}
-             </p>
-          </div>
-          <div className="flex items-start gap-3">
-             <div className={`mt-1 h-1.5 w-1.5 rounded-full bg-current ${theme} shrink-0`} />
-             <p className="text-[11px] font-bold text-slate-400">
-               <span className="text-white uppercase text-[9px] tracking-widest">JEE Relevance:</span> {formula.relevance}
-             </p>
-          </div>
+      <div className="pt-4 border-t border-white/5 mt-6 space-y-3">
+        <div className="flex items-start gap-3">
+           <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-slate-700 shrink-0" />
+           <p className="text-[11px] font-bold text-slate-400 leading-tight">
+             <span className="text-white">Usage:</span> {formula.usage}
+           </p>
+        </div>
+        <div className="flex items-start gap-3">
+           <div className={`mt-1.5 h-1.5 w-1.5 rounded-full bg-current ${theme} shrink-0`} />
+           <p className="text-[11px] font-bold text-slate-400 leading-tight">
+             <span className="text-white uppercase text-[9px] tracking-widest">JEE Relevance:</span> {formula.relevance}
+           </p>
         </div>
       </div>
     </motion.div>

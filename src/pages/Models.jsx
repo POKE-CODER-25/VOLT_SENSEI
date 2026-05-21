@@ -1424,11 +1424,11 @@ function Models() {
   const [simStep, setSimStep] = useState(0);
   const [customModels, setCustomModels] = useState([]);
   const [showGallery, setShowGallery] = useState(false);
-  const [isMobile, setIsMobile] = useState(isMobile);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
 
   useEffect(() => {
     const handleResize = () => {
-      const mobile = isMobile;
+      const mobile = window.innerWidth < 1024;
       setIsMobile(mobile);
       if (!mobile) setShowGallery(false);
     };
