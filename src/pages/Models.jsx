@@ -6,7 +6,7 @@ import { OrbitControls, PerspectiveCamera, Float, MeshDistortMaterial, Sphere, B
 import { Search, Box as BoxIcon, Shapes, Layers, Play, Info, RotateCcw, X, Sparkles, Menu, Save } from "lucide-react";
 import PageHeader from "../components/common/PageHeader";
 import { useAuth } from "../context/AuthContext";
-import { saveCustomModel, getCustomModels } from "../services/firestore";
+import { saveCustomModel, getCustomModels, cleanupCustomModels } from "../services/firestore";
 import { askVoltSensei } from "../services/groq";
 import { intelligentSearch } from "../services/search";
 import * as THREE from "three";
@@ -1429,11 +1429,17 @@ function Models() {
   const [customModels, setCustomModels] = useState([]);
   const [showGallery, setShowGallery] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
-  const [showSavePrompt, setShowSavePrompt] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [saveStatus, setSaveStatus] = useState(null); // { success: boolean, message: string }
+  const { loading: authLoading } = useAuth();
 
   useEffect(() => {
     const loadCustom = async () => {
       if (currentUser) {
+        // Run cleanup first to remove any accidental duplicates from DB
+        await cleanupCustomModels(currentUser.uid, subject);
+        
+        // Fetch deduplicated models
         const data = await getCustomModels(currentUser.uid, subject);
         const mapped = data.map(m => ({
           ...m,
@@ -1448,12 +1454,37 @@ function Models() {
   }, [currentUser, subject]);
 
   const handleSaveModel = async () => {
-    if (!currentUser || !selectedModel || !selectedModel.isAi) return;
-    try {
-      await saveCustomModel(currentUser.uid, selectedModel, subject);
-      setShowSavePrompt(false);
-    } catch (err) {
-      console.error("Save failed:", err);
+    if (!selectedModel || !selectedModel.isAi) return;
+    
+    if (authLoading) {
+      setSaveStatus({ success: false, message: "Checking login..." });
+      return;
+    }
+
+    if (!currentUser) {
+      setSaveStatus({ success: false, message: "Please login to save model" });
+      return;
+    }
+
+    const result = await saveCustomModel(currentUser.uid, selectedModel, subject);
+    setSaveStatus(result);
+
+    if (result.success) {
+      // Refresh custom models list
+      const data = await getCustomModels(currentUser.uid, subject);
+      const mapped = data.map(m => ({
+        ...m,
+        Component: m.subject === "chemistry" ? AIChemistryPlaceholder 
+                 : m.subject === "physics" ? AIPhysicsPlaceholder 
+                 : AIMathsPlaceholder
+      }));
+      setCustomModels(mapped);
+      
+      // Wait to show success message before closing
+      setTimeout(() => {
+        setShowSaveModal(false);
+        setSaveStatus(null);
+      }, 1500);
     }
   };
 
@@ -1603,6 +1634,8 @@ function Models() {
     setCustomModels(prev => [...prev, newModel]);
     setSelectedModel(newModel);
     setShowConcept(false);
+    setShowSaveModal(true);
+    setSaveStatus(null);
   };
 
   // Handle case where subject changed but selectedModel is from old subject
@@ -1676,7 +1709,7 @@ function Models() {
                   />
                 </div>
 
-                <div className="premium-surface lg:max-h-[700px] rounded-[2.5rem] border border-white/10 p-4 custom-scrollbar">
+                <div className="premium-surface lg:max-h-[700px] overflow-y-auto rounded-[2.5rem] border border-white/10 p-4 custom-scrollbar">
                   <div className="px-2 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500">
                     Model Gallery
                   </div>
@@ -1777,15 +1810,6 @@ function Models() {
               </div>
 
               <div className="absolute bottom-4 right-4 sm:bottom-8 sm:right-8 z-10 flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-3">
-                {currentModel.isAi && currentUser && (
-                  <button 
-                    onClick={handleSaveModel}
-                    className="flex items-center gap-2 sm:gap-3 rounded-xl sm:rounded-2xl bg-electric/20 text-electric border border-electric/30 px-4 py-2.5 sm:px-6 sm:py-3 text-xs sm:text-sm font-black transition hover:bg-electric/30 shadow-lg active:scale-95"
-                  >
-                    <Save size={14} className="sm:w-[18px] sm:h-[18px]" />
-                    Save Model
-                  </button>
-                )}
                 <button 
                   onClick={() => { setIsSimulating(true); setSimStep(0); setShowConcept(false); }}
                   className="flex items-center gap-2 sm:gap-3 rounded-xl sm:rounded-2xl bg-white px-4 py-2.5 sm:px-6 sm:py-3 text-xs sm:text-sm font-black text-slate-950 transition hover:bg-slate-200 shadow-lg active:scale-95"
@@ -2012,6 +2036,56 @@ function Models() {
               </div>
             </div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Save Modal */}
+      <AnimatePresence>
+        {showSaveModal && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="w-full max-w-md bg-slate-900 border border-white/10 rounded-[2.5rem] p-8 shadow-2xl overflow-hidden relative"
+            >
+              <div className="relative z-10 text-center">
+                <div className="mb-6 mx-auto h-16 w-16 rounded-full bg-electric/10 flex items-center justify-center">
+                  <Sparkles size={32} className="text-electric" />
+                </div>
+                
+                <h3 className="text-2xl font-black text-white mb-2">Save this model?</h3>
+                <p className="text-slate-400 text-sm mb-8">
+                  Would you like to add <span className="text-white font-bold">"{selectedModel?.name}"</span> to your personal gallery for quick access?
+                </p>
+
+                {saveStatus ? (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`mb-8 p-4 rounded-2xl border ${saveStatus.success ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-amber-500/10 border-amber-500/20 text-amber-400'}`}
+                  >
+                    <p className="text-sm font-black uppercase tracking-widest">{saveStatus.message}</p>
+                  </motion.div>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    <button
+                      onClick={handleSaveModel}
+                      className="w-full py-4 rounded-2xl bg-electric text-slate-950 text-sm font-black uppercase tracking-widest hover:scale-[1.02] transition-all"
+                    >
+                      Save to Gallery
+                    </button>
+                    <button
+                      onClick={() => setShowSaveModal(false)}
+                      className="w-full py-4 rounded-2xl bg-white/5 border border-white/10 text-slate-400 text-sm font-black uppercase tracking-widest hover:bg-white/10 transition-all"
+                    >
+                      Let it go
+                    </button>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 

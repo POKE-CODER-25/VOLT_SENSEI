@@ -1,6 +1,7 @@
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -401,16 +402,72 @@ export async function getCustomFormulae(uid, subject) {
 }
 
 export async function saveCustomModel(uid, model, subject) {
+  if (!uid) return { success: false, message: "User not logged in" };
+  
+  try {
+    // Check if model with same name already exists for this user
+    const modelsQuery = query(
+      collection(db, "customModels"),
+      where("uid", "==", uid),
+      where("name", "==", model.name)
+    );
+    const snapshot = await getDocs(modelsQuery);
+    
+    if (!snapshot.empty) {
+      return { success: false, message: "Already saved" };
+    }
+
+    // Note: We don't save the React component, just the metadata
+    const { Component, ...metadata } = model;
+    await addDoc(collection(db, "customModels"), {
+      uid,
+      subject,
+      ...metadata,
+      isAi: true,
+      createdAt: serverTimestamp(),
+    });
+    return { success: true, message: "Saved to your library" };
+  } catch (err) {
+    console.error("Error saving model:", err);
+    return { success: false, message: "Failed to save" };
+  }
+}
+
+export async function cleanupCustomModels(uid, subject) {
   if (!uid) return;
-  // Note: We don't save the React component, just the metadata
-  const { Component, ...metadata } = model;
-  await addDoc(collection(db, "customModels"), {
-    uid,
-    subject,
-    ...metadata,
-    isAi: true,
-    createdAt: serverTimestamp(),
-  });
+  try {
+    const modelsQuery = query(
+      collection(db, "customModels"),
+      where("uid", "==", uid),
+      where("subject", "==", subject)
+    );
+    const snapshot = await getDocs(modelsQuery);
+    
+    const seen = new Map();
+    const toDelete = [];
+
+    // Identify duplicates (group by name, keep newest)
+    const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+
+    for (const model of docs) {
+      if (seen.has(model.name)) {
+        toDelete.push(model.id);
+      } else {
+        seen.set(model.name, true);
+      }
+    }
+
+    // Delete duplicates
+    for (const id of toDelete) {
+      await deleteDoc(doc(db, "customModels", id));
+    }
+    
+    return { success: true, deletedCount: toDelete.length };
+  } catch (err) {
+    console.error("Cleanup failed:", err);
+    return { success: false };
+  }
 }
 
 export async function getCustomModels(uid, subject) {
@@ -421,7 +478,18 @@ export async function getCustomModels(uid, subject) {
     where("subject", "==", subject),
   );
   const snapshot = await getDocs(modelsQuery);
-  return snapshot.docs
+  const allModels = snapshot.docs
     .map(item => ({ id: item.id, ...item.data() }))
     .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+
+  // Deduplicate in memory as well for safety (keep newest)
+  const finalUnique = [];
+  const seen = new Set();
+  for (const m of allModels) {
+    if (!seen.has(m.name)) {
+      finalUnique.push(m);
+      seen.add(m.name);
+    }
+  }
+  return finalUnique;
 }
