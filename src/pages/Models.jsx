@@ -1777,6 +1777,15 @@ function Models() {
               </div>
 
               <div className="absolute bottom-4 right-4 sm:bottom-8 sm:right-8 z-10 flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-3">
+                {currentModel.isAi && currentUser && (
+                  <button 
+                    onClick={handleSaveModel}
+                    className="flex items-center gap-2 sm:gap-3 rounded-xl sm:rounded-2xl bg-electric/20 text-electric border border-electric/30 px-4 py-2.5 sm:px-6 sm:py-3 text-xs sm:text-sm font-black transition hover:bg-electric/30 shadow-lg active:scale-95"
+                  >
+                    <Save size={14} className="sm:w-[18px] sm:h-[18px]" />
+                    Save Model
+                  </button>
+                )}
                 <button 
                   onClick={() => { setIsSimulating(true); setSimStep(0); setShowConcept(false); }}
                   className="flex items-center gap-2 sm:gap-3 rounded-xl sm:rounded-2xl bg-white px-4 py-2.5 sm:px-6 sm:py-3 text-xs sm:text-sm font-black text-slate-950 transition hover:bg-slate-200 shadow-lg active:scale-95"

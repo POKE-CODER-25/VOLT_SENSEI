@@ -318,12 +318,13 @@ function Formulae() {
   // Auto-select element or target formula if confidence is high
   useEffect(() => {
     if (searchQuery.trim().length > 0 && activeSubject === "chemistry") {
-      // Auto-open if it's an exact match (even for short symbols like 'H') or high confidence fuzzy match
-      if (elementExactMatch || (searchQuery.length >= 3 && elementConfidence > 0.75)) {
+      // Do not auto-select element if there's an exact formula match or very high formula confidence
+      const hasStrongFormulaMatch = formulaExactMatch || (searchQuery.length >= 3 && formulaConfidence > 0.85);
+      if (!hasStrongFormulaMatch && (elementExactMatch || (searchQuery.length >= 3 && elementConfidence > 0.75))) {
         if (bestElement) setSelectedElement(bestElement);
       }
     }
-  }, [searchQuery, elementConfidence, bestElement, activeSubject, elementExactMatch]);
+  }, [searchQuery, elementConfidence, bestElement, activeSubject, elementExactMatch, formulaExactMatch, formulaConfidence]);
 
   const handleAiSearch = async () => {
     if (!searchQuery.trim() || isGenerating) return;
