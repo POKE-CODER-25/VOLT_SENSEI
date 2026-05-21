@@ -41,8 +41,14 @@ function HeroSection() {
   };
 
   const handleActivitySelect = (act) => {
-    const query = selectedSubject ? `?subject=${selectedSubject.id}` : "";
-    navigate(`${act.path}${query}`);
+    if (!selectedSubject) return;
+    
+    if (act.path === "/models") {
+      navigate(`/models/${selectedSubject.id}`);
+    } else {
+      const query = `?subject=${selectedSubject.id}`;
+      navigate(`${act.path}${query}`);
+    }
     handleCloseModal();
   };
 

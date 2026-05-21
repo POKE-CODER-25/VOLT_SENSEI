@@ -1433,6 +1433,14 @@ function Models() {
   const [saveStatus, setSaveStatus] = useState(null); // { success: boolean, message: string }
   const { loading: authLoading } = useAuth();
 
+  // Reset selected model when subject changes
+  useEffect(() => {
+    setSelectedModel(models[0]);
+    setShowConcept(false);
+    setIsSimulating(false);
+    setSearchQuery("");
+  }, [subject, models]);
+
   useEffect(() => {
     const loadCustom = async () => {
       if (currentUser) {

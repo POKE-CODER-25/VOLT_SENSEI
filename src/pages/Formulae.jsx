@@ -310,7 +310,11 @@ const SUBJECT_CONFIG = {
 
 function Formulae() {
   const { currentUser, loading: authLoading } = useAuth();
-  const [activeSubject, setActiveSubject] = useState("physics");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const subjectParam = searchParams.get("subject");
+  const initialSubject = SUBJECT_CONFIG[subjectParam] ? subjectParam : "physics";
+  
+  const [activeSubject, setActiveSubject] = useState(initialSubject);
   const [searchQuery, setSearchQuery] = useState("");
   const [aiGeneratedFormula, setAiGeneratedFormula] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -319,6 +323,21 @@ function Formulae() {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saveStatus, setSaveStatus] = useState(null); // { success: boolean, message: string }
   const config = SUBJECT_CONFIG[activeSubject];
+
+  // Sync activeSubject with query param
+  useEffect(() => {
+    if (subjectParam && SUBJECT_CONFIG[subjectParam] && subjectParam !== activeSubject) {
+      setActiveSubject(subjectParam);
+    }
+  }, [subjectParam]);
+
+  const handleSubjectChange = (id) => {
+    setActiveSubject(id);
+    setSearchParams({ subject: id });
+    setAiGeneratedFormula(null);
+    setSearchQuery("");
+    setSelectedElement(null);
+  };
 
   // Fetch custom formulae
   useEffect(() => {

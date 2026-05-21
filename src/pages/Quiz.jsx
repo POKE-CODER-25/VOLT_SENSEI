@@ -52,8 +52,11 @@ function Quiz() {
   const [difficulty, setDifficulty] = useState(difficulties[1]);
   const [questionType, setQuestionType] = useState(questionTypes[0]);
   
+  // Sync topic when subjectKey changes (from URL)
   useEffect(() => {
     setTopic(config.topics[0]);
+    setPhase("setup");
+    setError("");
   }, [subjectKey]);
 
   const handleSubjectChange = (key) => {
@@ -62,8 +65,6 @@ function Quiz() {
     if (transitionTimeoutRef.current) clearTimeout(transitionTimeoutRef.current);
     
     setSearchParams({ subject: key });
-    setPhase("setup");
-    setError("");
   };
 
   const [questions, setQuestions] = useState([]);

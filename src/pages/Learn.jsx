@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Bot, Check, Clipboard, Copy, Eye, Loader2, Maximize, Minimize, Plus, Send,
-  Sparkles, Trash2, UserRound, X, Search, MessageSquare, Calculator, Cpu, Atom, ChevronRight
+  Sparkles, Trash2, UserRound, X, Search, MessageSquare, Calculator, Cpu, Atom, ChevronRight, Menu
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams, useOutletContext } from "react-router-dom";
