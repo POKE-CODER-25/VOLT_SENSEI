@@ -193,8 +193,8 @@ const ALL_ELEMENTS = [
 
 function PeriodicTable({ onSelect, selectedId }) {
   return (
-    <div className="mb-12 -mx-4 md:mx-0 overflow-x-auto custom-scrollbar pb-6 px-4 scroll-smooth md:flex md:justify-center">
-      <div className="mx-auto inline-grid grid-cols-[repeat(18,40px)] md:grid-cols-[repeat(18,52px)] gap-1 p-2 md:p-3 pt-1 bg-slate-900/40 rounded-[2rem] border border-white/10 backdrop-blur-3xl shadow-[0_0_50px_rgba(0,0,0,0.3)] min-w-max">
+    <div className="mb-12 -mx-4 md:mx-0 overflow-x-auto custom-scrollbar pb-6 px-4 scroll-smooth">
+      <div className="w-max mx-auto grid grid-cols-[repeat(18,40px)] md:grid-cols-[repeat(18,52px)] gap-1 p-2 md:p-3 pt-1 bg-slate-900/40 rounded-[2rem] border border-white/10 backdrop-blur-3xl shadow-[0_0_50px_rgba(0,0,0,0.3)]">
         {/* Legend in the 'Hole' (Rows 1-3, Columns 4-12) */}
         <div style={{ gridColumn: '4 / 13', gridRow: '1 / 4' }} className="flex flex-col items-center justify-center p-2 self-center">
            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 max-w-[400px]">
