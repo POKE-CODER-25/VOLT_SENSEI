@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Award, BarChart3, BookOpenCheck, Brain, Crown, Flame, Target, Zap } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import {
   Bar,
   BarChart,
@@ -45,11 +45,16 @@ function Dashboard() {
   const [revisionHistory, setRevisionHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const isInitialMount = useRef(true);
 
   useEffect(() => {
     const loadDashboard = async () => {
-      if (!currentUser) return;
-      setLoading(true);
+      if (!currentUser?.uid) return;
+      
+      // Only show skeleton loading on truly the first mount with no profile
+      if (isInitialMount.current && !profile) {
+        setLoading(true);
+      }
       setError("");
 
       try {
@@ -62,14 +67,15 @@ function Dashboard() {
         setError(dashboardError.message);
       } finally {
         setLoading(false);
+        isInitialMount.current = false;
       }
     };
 
     loadDashboard();
-  }, [currentUser]);
+  }, [currentUser?.uid, refreshProfile]);
 
   useEffect(() => {
-    if (!currentUser) return undefined;
+    if (!currentUser?.uid) return undefined;
 
     const unsubscribeAttempts = subscribeToQuizAttempts(currentUser.uid, setAttempts);
     const unsubscribeChat = subscribeToChatHistory(currentUser.uid, setChatHistory);
@@ -78,7 +84,7 @@ function Dashboard() {
       unsubscribeAttempts();
       unsubscribeChat();
     };
-  }, [currentUser]);
+  }, [currentUser?.uid]);
 
   const analytics = useMemo(() => {
     const totalQuizzes = attempts.length;

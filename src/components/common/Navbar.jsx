@@ -16,12 +16,6 @@ const models = [
   { label: "Chemistry Models", to: "/models/chemistry", icon: Atom, color: "text-emerald-400" },
 ];
 
-const navItems = [
-  { label: "Home", to: "/" },
-  { label: "Battle Ground", to: "/quiz" },
-  { label: "XP Level", to: "/dashboard" },
-];
-
 const navLinkClass = ({ isActive }) => {
   return `rounded-2xl px-4 py-2 text-[13px] font-black transition duration-300 flex items-center gap-2 ${
     isActive
@@ -233,8 +227,8 @@ function Navbar() {
 
   // Close mobile menu on route change
   useEffect(() => {
-    setIsOpen(false);
-  }, [location]);
+    if (isOpen) setIsOpen(false);
+  }, [location.pathname]);
 
   return (
     <motion.header

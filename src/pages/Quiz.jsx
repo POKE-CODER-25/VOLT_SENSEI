@@ -48,16 +48,29 @@ function Quiz() {
   const config = subjectData[subjectKey] || subjectData.physics;
 
   const { currentUser, profile, refreshProfile } = useAuth();
+  
+  const [questions, setQuestions] = useState([]);
+  const [step, setStep] = useState(0);
+  const [selected, setSelected] = useState("");
+  const [answers, setAnswers] = useState([]);
+  const [phase, setPhase] = useState("setup");
+  const [countdown, setCountdown] = useState(3);
   const [topic, setTopic] = useState(config.topics[0]);
   const [difficulty, setDifficulty] = useState(difficulties[1]);
   const [questionType, setQuestionType] = useState(questionTypes[0]);
-  
+  const [timeLeft, setTimeLeft] = useState(getTimeLimit(difficulty));
+  const [startedAt, setStartedAt] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [finalTimeSpent, setFinalTimeSpent] = useState(0);
+
   // Sync topic when subjectKey changes (from URL)
   useEffect(() => {
     setTopic(config.topics[0]);
     setPhase("setup");
     setError("");
-  }, [subjectKey]);
+  }, [subjectKey, config.topics]);
 
   const handleSubjectChange = (key) => {
     if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
@@ -66,18 +79,6 @@ function Quiz() {
     
     setSearchParams({ subject: key });
   };
-
-  const [questions, setQuestions] = useState([]);
-  const [step, setStep] = useState(0);
-  const [selected, setSelected] = useState("");
-  const [answers, setAnswers] = useState([]);
-  const [phase, setPhase] = useState("setup");
-  const [countdown, setCountdown] = useState(3);
-  const [timeLeft, setTimeLeft] = useState(getTimeLimit(difficulty));
-  const [startedAt, setStartedAt] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [saving, setSaving] = useState(false);
 
   const current = questions[step];
 
@@ -89,7 +90,6 @@ function Quiz() {
       .filter((answer) => !answer.isCorrect)
       .map((answer) => answer.topic)
       .filter(Boolean);
-    const timeSpent = startedAt ? Math.round((Date.now() - startedAt) / 1000) : 0;
     
     let xpEarned = answers.reduce((sum, answer) => sum + (answer.isCorrect ? answer.xpReward : 0), 0);
     if (accuracy === 100 && total > 0) xpEarned += 250;
@@ -101,13 +101,13 @@ function Quiz() {
       total,
       accuracy,
       weakAreas: [...new Set(weakAreas)],
-      timeSpent,
+      timeSpent: finalTimeSpent,
       xpEarned,
       strongestTopic: accuracy >= 70 && total > 0 ? topic : "Needs revision",
       weakestTopic: weakAreas[0] || "None detected",
       averageResponseTime: answers.length ? Math.round(answers.reduce((sum, answer) => sum + answer.responseTime, 0) / answers.length) : 0,
     };
-  }, [answers, questions.length, startedAt, topic, difficulty]);
+  }, [answers, questions.length, finalTimeSpent, topic, difficulty]);
 
   const countdownIntervalRef = useRef(null);
   const activeTimerRef = useRef(null);
@@ -161,6 +161,8 @@ function Quiz() {
   };
 
   const finishQuiz = async (finalAnswers = answers) => {
+    const timeSpent = startedAt ? Math.round((Date.now() - startedAt) / 1000) : 0;
+    setFinalTimeSpent(timeSpent);
     setPhase("results");
     if (activeTimerRef.current) clearInterval(activeTimerRef.current);
 
@@ -169,7 +171,6 @@ function Quiz() {
     const correct = finalAnswers.filter((answer) => answer.isCorrect).length;
     const accuracy = Math.round((correct / questions.length) * 100);
     const weakAreas = [...new Set(finalAnswers.filter((answer) => !answer.isCorrect).map((answer) => answer.topic))];
-    const timeSpent = startedAt ? Math.round((Date.now() - startedAt) / 1000) : 0;
     
     let xpEarned = finalAnswers.reduce((sum, answer) => sum + (answer.isCorrect ? answer.xpReward : 0), 0);
     if (accuracy === 100) xpEarned += 250;

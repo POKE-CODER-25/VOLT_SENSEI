@@ -65,6 +65,11 @@ function AtomStructure({ nucleusColor, shells, highlight }) {
   const isNucleusHighlighted = highlight === "primary";
   const areOrbitsHighlighted = highlight === "secondary" || highlight === "detail";
 
+  // Generate stable rotations for shells
+  const shellRotations = useMemo(() => {
+    return shells.map(() => [Math.random() * Math.PI, Math.random() * Math.PI, 0]);
+  }, [shells.length]);
+
   return (
     <group>
       <HighlightWrapper active={isNucleusHighlighted}>
@@ -79,7 +84,7 @@ function AtomStructure({ nucleusColor, shells, highlight }) {
       {shells.map((count, i) => {
         const radius = 1.2 + i * 0.8;
         return (
-          <group key={i} rotation={[Math.random() * Math.PI, Math.random() * Math.PI, 0]}>
+          <group key={i} rotation={shellRotations[i]}>
             <Torus args={[radius, 0.01, 16, 100]} rotation={[Math.PI / 2, 0, 0]}>
               <meshBasicMaterial color="white" transparent opacity={areOrbitsHighlighted ? 0.4 : 0.1} />
             </Torus>
@@ -1649,12 +1654,13 @@ function Models() {
   // Handle case where subject changed but selectedModel is from old subject
   const currentModel = useMemo(() => {
     const found = filteredModels.find(m => m.id === selectedModel.id);
-    if (!found) {
-      setShowConcept(false);
-      return filteredModels[0] || models[0];
-    }
-    return found;
+    return found || filteredModels[0] || models[0];
   }, [filteredModels, selectedModel, models]);
+
+  // Sync concept panel state when model changes
+  useEffect(() => {
+    setShowConcept(false);
+  }, [currentModel.id]);
 
   const ActiveModel = currentModel.Component;
 

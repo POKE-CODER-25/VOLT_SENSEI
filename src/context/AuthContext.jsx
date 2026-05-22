@@ -6,7 +6,7 @@ import {
   signOut,
   updateProfile,
 } from "firebase/auth";
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, useCallback } from "react";
 import { auth, googleProvider } from "../firebase/config";
 import { createUserProfile, getUserProfile } from "../services/firestore";
 
@@ -34,31 +34,32 @@ export function AuthProvider({ children }) {
     return unsubscribe;
   }, []);
 
-  const signup = async ({ name, email, password }) => {
+  const signup = useCallback(async ({ name, email, password }) => {
     const credential = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(credential.user, { displayName: name });
     await createUserProfile(credential.user, name);
     setProfile(await getUserProfile(credential.user.uid));
     return credential.user;
-  };
+  }, []);
 
-  const login = ({ email, password }) => signInWithEmailAndPassword(auth, email, password);
+  const login = useCallback(({ email, password }) => 
+    signInWithEmailAndPassword(auth, email, password), []);
 
-  const loginWithGoogle = async () => {
+  const loginWithGoogle = useCallback(async () => {
     const credential = await signInWithPopup(auth, googleProvider);
     await createUserProfile(credential.user);
     setProfile(await getUserProfile(credential.user.uid));
     return credential.user;
-  };
+  }, []);
 
-  const logout = () => signOut(auth);
+  const logout = useCallback(() => signOut(auth), []);
 
-  const refreshProfile = async () => {
+  const refreshProfile = useCallback(async () => {
     if (!auth.currentUser) return null;
     const nextProfile = await getUserProfile(auth.currentUser.uid);
     setProfile(nextProfile);
     return nextProfile;
-  };
+  }, []);
 
   const value = useMemo(
     () => ({
@@ -71,7 +72,7 @@ export function AuthProvider({ children }) {
       logout,
       refreshProfile,
     }),
-    [currentUser, profile, loading],
+    [currentUser, profile, loading, signup, login, loginWithGoogle, logout, refreshProfile],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
