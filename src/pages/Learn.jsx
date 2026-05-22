@@ -33,8 +33,8 @@ const subjectData = {
           transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
           className="absolute h-1 w-1 rounded-full bg-electric shadow-glow"
         />
-        <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
-          <path d="M 0 50 Q 50 10 100 50 T 200 50" fill="transparent" stroke="#00F5FF" strokeWidth="0.5" strokeDasharray="5,5" />
+        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M 0 50 Q 25 10 50 50 T 100 50" fill="transparent" stroke="currentColor" className="text-electric" strokeWidth="0.2" strokeDasharray="2,2" />
         </svg>
       </div>
     ),
@@ -114,11 +114,11 @@ function renderInlineMarkdown(text) {
   const pieces = text.split(/(\*\*[^*]+\*\*|\$[^$]+\$)/g);
   return pieces.map((piece, index) => {
     if (piece.startsWith("**") && piece.endsWith("**")) {
-      return <strong key={index}>{piece.slice(2, -2)}</strong>;
+      return <strong key={index} className="font-black text-white">{piece.slice(2, -2)}</strong>;
     }
     if (piece.startsWith("$") && piece.endsWith("$")) {
       return (
-        <span key={index} className="mx-1 rounded border border-current/25 bg-current/10 px-1 font-mono text-[0.9em]">
+        <span key={index} className="mx-1 rounded border border-current/25 bg-current/10 px-1.5 py-0.5 font-mono text-[0.85em] inline-block max-w-full break-words overflow-wrap-anywhere leading-tight align-middle">
           {piece.slice(1, -1)}
         </span>
       );
@@ -129,18 +129,18 @@ function renderInlineMarkdown(text) {
 
 function MarkdownMessage({ text }) {
   return (
-    <div className="space-y-2">
+    <div className="space-y-3 max-w-full overflow-hidden break-words whitespace-pre-wrap">
       {text.split("\n").filter(Boolean).map((line, i) => {
         const listMatch = line.trim().match(/^([-*]|\d+\.)\s+(.*)$/);
         if (listMatch) {
           return (
-            <div key={i} className="flex gap-2 ml-4">
-              <span className="text-current opacity-50">•</span>
-              <p>{renderInlineMarkdown(listMatch[2])}</p>
+            <div key={i} className="flex gap-2 ml-2 md:ml-4 min-w-0 items-start">
+              <span className="text-current opacity-40 shrink-0 mt-1.5">•</span>
+              <div className="min-w-0 flex-1 break-words">{renderInlineMarkdown(listMatch[2])}</div>
             </div>
           );
         }
-        return <p key={i}>{renderInlineMarkdown(line)}</p>;
+        return <p key={i} className="break-words leading-relaxed">{renderInlineMarkdown(line)}</p>;
       })}
     </div>
   );
@@ -425,24 +425,24 @@ function Learn() {
         </header>
 
         {/* Chat Messages */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 md:space-y-8 custom-scrollbar pb-40 scroll-smooth">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 md:space-y-8 custom-scrollbar pb-10 scroll-smooth z-10">
           {messages.map((msg) => (
             <motion.div
               key={msg.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className={`flex gap-3 md:gap-5 ${msg.role === "student" ? "flex-row-reverse" : ""} ${msg.isStreaming && !msg.text ? "hidden" : ""}`}
+              className={`flex gap-3 md:gap-5 ${msg.role === "student" ? "flex-row-reverse" : "flex-row"} ${msg.isStreaming && !msg.text ? "hidden" : ""}`}
             >
-              <div className={`w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl shrink-0 flex items-center justify-center shadow-lg ${
+              <div className={`w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl shrink-0 flex items-center justify-center shadow-lg z-20 ${
                 msg.role === "student" ? "bg-white/10" : `${config.bg} border ${config.border}`
               }`}>
-                {msg.role === "student" ? <UserRound size={16} className="md:w-5 md:h-5 text-white" /> : <config.icon className={config.theme} size={16} className="md:w-5 md:h-5" />}
+                {msg.role === "student" ? <UserRound size={16} className="text-white md:w-5 md:h-5" /> : <config.icon className={`${config.theme} md:w-5 md:h-5`} size={16} />}
               </div>
-              <div className={`max-w-[90%] md:max-w-[75%] space-y-2 ${msg.role === "student" ? "items-end" : ""}`}>
-                <div className={`p-4 md:p-5 rounded-2xl border text-[13px] md:text-[15px] leading-relaxed shadow-xl ${
+              <div className={`max-w-[85%] sm:max-w-[80%] md:max-w-[70%] space-y-2 ${msg.role === "student" ? "items-end" : "items-start"} min-w-0 z-20`}>
+                <div className={`p-4 md:p-5 rounded-2xl border text-[13px] md:text-[15px] leading-relaxed shadow-xl overflow-hidden break-words whitespace-pre-wrap ${
                   msg.role === "student" 
-                    ? "bg-white/5 border-white/10 rounded-tr-none text-white" 
-                    : `${config.bg} ${config.border} rounded-tl-none text-slate-100`
+                    ? "bg-slate-900 border-white/10 rounded-tr-none text-white" 
+                    : `bg-slate-900 border-white/10 rounded-tl-none text-slate-100 backdrop-blur-md`
                 }`}>
                   <MarkdownMessage text={msg.text} />
                 </div>
@@ -458,16 +458,16 @@ function Learn() {
             </motion.div>
           ))}
           {isThinking && (
-            <div className="flex gap-3 md:gap-5 animate-pulse">
+            <div className="flex gap-3 md:gap-5 animate-pulse z-10">
               <div className={`w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl shrink-0 flex items-center justify-center ${config.bg} border ${config.border}`}>
-                <Loader2 className={`animate-spin ${config.theme}`} size={16} className="md:w-5 md:h-5" />
+                <Loader2 className={`animate-spin ${config.theme} md:w-5 md:h-5`} size={16} />
               </div>
-              <div className="px-5 py-4 rounded-2xl border bg-white/5 border-white/10 italic text-sm text-slate-500 shadow-lg">
+              <div className="px-5 py-4 rounded-2xl border bg-slate-900 border-white/10 italic text-sm text-slate-500 shadow-lg backdrop-blur-md">
                 Sensei is thinking...
               </div>
             </div>
           )}
-          <div ref={messagesEndRef} className="h-4" />
+          <div ref={messagesEndRef} className="h-40 md:h-48 pb-10" />
         </div>
 
         {/* Input Area */}
