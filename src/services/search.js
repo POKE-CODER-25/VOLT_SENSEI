@@ -66,9 +66,10 @@ export function intelligentSearch(list, query, keys = ['name'], threshold = 0.4)
         } else if (tWords.some(tw => tw.includes(qw))) {
           wordMatches += 0.8;
         } else {
-          // Fuzzy word match
+          // Fast fuzzy path: only do Levenshtein if there's significant length similarity
           let bestFuzzy = 0;
           tWords.forEach(tw => {
+            if (Math.abs(qw.length - tw.length) > 3) return; // Skip if lengths are too different
             const dist = getLevenshteinDistance(qw, tw);
             const s = (Math.max(qw.length, tw.length) - dist) / Math.max(qw.length, tw.length);
             if (s > bestFuzzy) bestFuzzy = s;

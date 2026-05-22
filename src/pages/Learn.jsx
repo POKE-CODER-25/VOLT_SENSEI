@@ -3,7 +3,7 @@ import {
   Bot, Check, Clipboard, Copy, Eye, Loader2, Maximize, Minimize, Plus, Send,
   Sparkles, Trash2, UserRound, X, Search, MessageSquare, Calculator, Cpu, Atom, ChevronRight, Menu
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, memo, useCallback } from "react";
 import { useSearchParams, useOutletContext } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -110,7 +110,7 @@ function createMessage(role, text, extra = {}) {
   };
 }
 
-function renderInlineMarkdown(text) {
+const renderInlineMarkdown = (text) => {
   const pieces = text.split(/(\*\*[^*]+\*\*|\$[^$]+\$)/g);
   return pieces.map((piece, index) => {
     if (piece.startsWith("**") && piece.endsWith("**")) {
@@ -125,9 +125,9 @@ function renderInlineMarkdown(text) {
     }
     return piece;
   });
-}
+};
 
-function MarkdownMessage({ text }) {
+const MarkdownMessage = memo(({ text }) => {
   return (
     <div className="space-y-3 max-w-full overflow-hidden break-words whitespace-pre-wrap">
       {text.split("\n").filter(Boolean).map((line, i) => {
@@ -144,7 +144,7 @@ function MarkdownMessage({ text }) {
       })}
     </div>
   );
-}
+});
 
 function Learn() {
   const [searchParams] = useSearchParams();

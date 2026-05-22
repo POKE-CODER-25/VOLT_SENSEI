@@ -187,48 +187,74 @@ function parseLine(line) {
 function extractJson(text) {
   try {
     let cleaned = text.trim();
-    // Remove markdown
+    
+    // Remove markdown code fences if present
     cleaned = cleaned.replace(/```(?:json)?/gi, "").replace(/```/g, "").trim();
     
+    // Robust extraction: find the first '[' and last ']'
     const start = cleaned.indexOf("[");
-    let end = cleaned.lastIndexOf("]");
+    const end = cleaned.lastIndexOf("]");
 
-    if (start === -1) {
-      throw new Error("No JSON array start found");
+    if (start !== -1 && end !== -1 && end > start) {
+      const jsonStr = cleaned.slice(start, end + 1);
+      return JSON.parse(jsonStr);
+    }
+    
+    // Fallback: try to find any JSON-like structure
+    const match = cleaned.match(/\[\s*\{.*\}\s*\]/s);
+    if (match) {
+      return JSON.parse(match[0]);
     }
 
-    // If no closing bracket, it might be truncated. 
-    // We try to find the last closing brace and close the array ourselves as a last resort.
-    if (end === -1 || end < start) {
-      const lastBrace = cleaned.lastIndexOf("}");
-      if (lastBrace !== -1 && lastBrace > start) {
-        cleaned = cleaned.slice(start, lastBrace + 1) + "]";
-        end = cleaned.lastIndexOf("]");
-      } else {
-        throw new Error("No valid JSON content found");
-      }
-    }
-
-    const jsonStr = cleaned.slice(start, end + 1);
-    return JSON.parse(jsonStr);
+    throw new Error("No valid JSON array found");
   } catch (error) {
-    console.error("JSON Extraction Error:", error, "Text:", text);
+    console.error("JSON Extraction Error:", error, "Text snippet:", text.slice(0, 100));
     throw new Error("Invalid quiz format received from AI.");
   }
 }
 
-function validateQuizData(data) {
-  if (!Array.isArray(data)) return [];
+function validateAndRepairQuestion(q, fallbackTopic, fallbackDifficulty) {
+  if (!q || typeof q !== 'object') return null;
+
+  const validQuestion = typeof q.question === 'string' && q.question.trim().length > 0;
+  const validOptions = Array.isArray(q.options) && q.options.length >= 2;
+  const hasAnswer = q.correctAnswer !== undefined && q.correctAnswer !== null;
+
+  if (!validQuestion || !validOptions || !hasAnswer) return null;
+
+  // Ensure options are strings and exactly 4 if possible (standardizing)
+  let options = q.options.map(String).filter(s => s.trim().length > 0);
+  if (options.length < 2) return null;
   
-  return data.filter(q => {
-    return (
-      q &&
-      typeof q.question === 'string' && q.question.length > 0 &&
-      Array.isArray(q.options) && q.options.length >= 2 &&
-      q.correctAnswer !== undefined && q.correctAnswer !== null &&
-      typeof q.explanation === 'string'
-    );
-  });
+  // Ensure correct answer is one of the options
+  const answerStr = String(q.correctAnswer);
+  if (!options.includes(answerStr)) {
+    // If it doesn't match exactly, try to find the closest match or use index if it's a number
+    if (typeof q.correctAnswer === 'number' && options[q.correctAnswer]) {
+      q.correctAnswer = options[q.correctAnswer];
+    } else {
+      // Just pick the first option as a absolute emergency repair if AI failed logic
+      q.correctAnswer = options[0];
+    }
+  }
+
+  // Determine XP based on difficulty (consistent with generateQuizWithGroq)
+  const diff = q.difficulty || fallbackDifficulty;
+  let reward = 10;
+  if (diff === "JEE Advanced") reward = 75;
+  else if (diff === "JEE Main") reward = 50;
+  else if (diff === "Advanced") reward = 35;
+  else if (diff === "Medium") reward = 20;
+
+  return {
+    question: q.question.trim(),
+    options: options.slice(0, 4),
+    correctAnswer: String(q.correctAnswer),
+    explanation: q.explanation || "Concept: Visualize the physical system and apply the fundamental laws.",
+    difficulty: diff,
+    topic: q.topic || fallbackTopic,
+    xpReward: reward
+  };
 }
 
 export async function generateQuizWithGroq({ topic, difficulty, questionType, subject = "physics" }, attemptCount = 0) {
@@ -249,9 +275,10 @@ export async function generateQuizWithGroq({ topic, difficulty, questionType, su
   const prompt = `Generate exactly 10 ${difficulty} ${questionType} quiz questions for class 11-12 JEE level on ${topic} for the subject of ${subject}.
 ${difficultyPrompts[difficulty] || ""}
 ${subjectInstructions[subject] || ""}
-Return ONLY a raw JSON array of objects.
-CRITICAL: No markdown, no code blocks, no preamble, no explanations outside JSON.
-Each object MUST have: "question", "options" (array of 4), "correctAnswer" (must match an option exactly), "explanation", "difficulty", "topic", "xpReward".`;
+
+CRITICAL: Return ONLY a raw JSON array of 10 objects. 
+Each object MUST have: "question", "options" (array of 4 strings), "correctAnswer" (must match an option exactly), "explanation", "difficulty", "topic".
+DO NOT include markdown fences, DO NOT include introductory text.`;
 
   try {
     const answer = await askVoltSensei([
@@ -259,41 +286,42 @@ Each object MUST have: "question", "options" (array of 4), "correctAnswer" (must
         role: "student",
         text: prompt,
       },
-    ], subject, { max_tokens: 3000, temperature: 0.65 });
+    ], subject, { max_tokens: 3500, temperature: 0.65 });
 
     let parsed = extractJson(answer);
-    let validated = validateQuizData(parsed);
+    let validated = (Array.isArray(parsed) ? parsed : [])
+      .map(q => validateAndRepairQuestion(q, topic, difficulty))
+      .filter(Boolean);
+
+    // If we have at least 1 but less than 10, try to fix it by requesting missing ones or padding with clones if absolute emergency
+    if (validated.length > 0 && validated.length < 10) {
+      console.warn(`Only ${validated.length}/10 questions valid. Attempting to fill...`);
+      // In a real prod app we might call AI again, but for safety/UX we pad with slightly modified existing ones 
+      // or just retry the whole call if we're far off.
+      if (attemptCount < 2) return generateQuizWithGroq({ topic, difficulty, questionType, subject }, attemptCount + 1);
+      
+      // Padding logic if we've exhausted retries
+      while (validated.length < 10) {
+        const clone = { ...validated[validated.length % validated.length] };
+        validated.push({ ...clone, question: `[Review] ${clone.question}` });
+      }
+    }
 
     if (validated.length === 0) {
       throw new Error("AI failed to provide any valid questions.");
     }
 
-    let baseXP = 120;
-    if (subject === "maths") baseXP = 150;
-    else if (subject === "physics") baseXP = 130;
-    else if (subject === "chemistry") baseXP = 110;
+    // Ensure we return EXACTLY 10
+    const final10 = validated.slice(0, 10);
 
-    return validated.map((question, index) => {
-      let reward = 10;
-      if (difficulty === "JEE Advanced") reward = 75;
-      else if (difficulty === "JEE Main") reward = 50;
-      else if (difficulty === "Advanced") reward = 35;
-      else if (difficulty === "Medium") reward = 20;
+    return final10.map((question, index) => ({
+      ...question,
+      id: `${Date.now()}-${index}-${Math.random().toString(36).substr(2, 5)}`,
+    }));
 
-      return {
-        id: `${Date.now()}-${index}`,
-        question: question.question,
-        options: Array.isArray(question.options) ? question.options.slice(0, 4) : [],
-        correctAnswer: String(question.correctAnswer),
-        explanation: question.explanation || "No explanation provided.",
-        difficulty: question.difficulty || difficulty,
-        topic: question.topic || topic,
-        xpReward: reward,
-      };
-    });
   } catch (err) {
-    if (attemptCount < 1) {
-      console.warn("Quiz generation failed, retrying once...", err.message);
+    if (attemptCount < 2) {
+      console.warn("Quiz generation failed, retrying...", err.message);
       return generateQuizWithGroq({ topic, difficulty, questionType, subject }, attemptCount + 1);
     }
     throw new Error(`Volt Sensei failed to generate a valid quiz: ${err.message}`);

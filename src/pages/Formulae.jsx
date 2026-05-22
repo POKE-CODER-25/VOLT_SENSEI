@@ -1,7 +1,7 @@
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Atom, Calculator, Cpu, Sparkles, BookOpen, Search, Loader2, Info, Zap, X } from "lucide-react";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, memo } from "react";
 import PageHeader from "../components/common/PageHeader";
 import { useAuth } from "../context/AuthContext";
 import { saveCustomFormula, getCustomFormulae } from "../services/firestore";
@@ -191,7 +191,43 @@ const ALL_ELEMENTS = [
   { n: 118, s: "Og", name: "Oganesson", cat: "noble", b: "p", r: 7, c: 18, v: "0", m: "294", conf: "[Rn] 7p⁶", info: "Predicted noble gas." },
 ];
 
-function PeriodicTable({ onSelect, selectedId }) {
+const ElementCell = memo(({ el, isSelected, category, onClick }) => {
+  return (
+    <motion.button
+      whileHover={{ scale: 1.25, zIndex: 50 }}
+      whileTap={{ scale: 0.9 }}
+      onClick={() => onClick(el)}
+      style={{ gridColumn: el.c, gridRow: el.r }}
+      className={`relative flex flex-col items-center justify-center h-[40px] md:h-[52px] rounded-md border transition-all duration-300 ${
+        isSelected
+          ? `${category.border} ${category.color.replace('bg-', 'bg-opacity-20 ')} ring-1 ring-white/20 shadow-[0_0_15px_rgba(255,255,255,0.05)]`
+          : `border-white/5 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.05]`
+      }`}
+    >
+      <span className="absolute top-0.5 left-1 text-[6px] md:text-[7px] font-black text-slate-500">{el.n}</span>
+      <span className={`text-sm md:text-base font-black ${isSelected ? 'text-white' : 'text-slate-200 group-hover:text-white'}`}>
+        {el.s}
+      </span>
+      <span className="hidden md:block text-[5px] font-black text-slate-500 uppercase tracking-tight truncate w-full px-1 text-center leading-none mt-0.5">
+        {el.name}
+      </span>
+      
+      {/* Category Indicator Line */}
+      <div className={`absolute bottom-0.5 w-5 md:w-6 h-0.5 rounded-full ${category.color} ${isSelected ? 'opacity-100 shadow-[0_0_8px_currentColor]' : 'opacity-40'}`} />
+
+      {/* Selected Glow Halo */}
+      {isSelected && (
+        <motion.div 
+          layoutId="halo"
+          className={`absolute -inset-1 rounded-lg border-2 ${category.border} opacity-40 blur-[1px]`}
+          initial={false}
+        />
+      )}
+    </motion.button>
+  );
+});
+
+const PeriodicTable = memo(({ onSelect, selectedId }) => {
   return (
     <div className="mb-12 -mx-4 md:mx-0 overflow-x-auto custom-scrollbar pb-6 px-4 scroll-smooth">
       <div className="w-max mx-auto grid grid-cols-[repeat(18,40px)] md:grid-cols-[repeat(18,52px)] gap-1 p-2 md:p-3 pt-1 bg-slate-900/40 rounded-[2rem] border border-white/10 backdrop-blur-3xl shadow-[0_0_50px_rgba(0,0,0,0.3)]">
@@ -220,44 +256,19 @@ function PeriodicTable({ onSelect, selectedId }) {
           const isSelected = selectedId === el.n;
           
           return (
-            <motion.button
-              key={el.n}
-              whileHover={{ scale: 1.25, zIndex: 50 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={() => onSelect(el)}
-              style={{ gridColumn: el.c, gridRow: el.r }}
-              className={`relative flex flex-col items-center justify-center h-[40px] md:h-[52px] rounded-md border transition-all duration-300 ${
-                isSelected
-                  ? `${category.border} ${category.color.replace('bg-', 'bg-opacity-20 ')} ring-1 ring-white/20 shadow-[0_0_15px_rgba(255,255,255,0.05)]`
-                  : `border-white/5 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.05]`
-              }`}
-            >
-              <span className="absolute top-0.5 left-1 text-[6px] md:text-[7px] font-black text-slate-500">{el.n}</span>
-              <span className={`text-sm md:text-base font-black ${isSelected ? 'text-white' : 'text-slate-200 group-hover:text-white'}`}>
-                {el.s}
-              </span>
-              <span className="hidden md:block text-[5px] font-black text-slate-500 uppercase tracking-tight truncate w-full px-1 text-center leading-none mt-0.5">
-                {el.name}
-              </span>
-              
-              {/* Category Indicator Line */}
-              <div className={`absolute bottom-0.5 w-5 md:w-6 h-0.5 rounded-full ${category.color} ${isSelected ? 'opacity-100 shadow-[0_0_8px_currentColor]' : 'opacity-40'}`} />
-
-              {/* Selected Glow Halo */}
-              {isSelected && (
-                <motion.div 
-                  layoutId="halo"
-                  className={`absolute -inset-1 rounded-lg border-2 ${category.border} opacity-40 blur-[1px]`}
-                  initial={false}
-                />
-              )}
-            </motion.button>
+            <ElementCell 
+              key={el.n} 
+              el={el} 
+              isSelected={isSelected} 
+              category={category} 
+              onClick={onSelect} 
+            />
           );
         })}
       </div>
     </div>
   );
-}
+});
 
 const SUBJECT_CONFIG = {
   physics: {

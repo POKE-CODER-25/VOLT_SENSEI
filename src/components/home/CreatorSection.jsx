@@ -6,7 +6,7 @@ function CreatorSection() {
     { 
       icon: Globe, 
       label: "GitHub", 
-      href: "#", 
+     href: "https://github.com/POKE-CODER-25", 
       username: "Source Code",
       color: "hover:text-white",
       bg: "hover:bg-white/10"
@@ -14,7 +14,7 @@ function CreatorSection() {
     { 
       icon: Share2, 
       label: "LinkedIn", 
-      href: "#", 
+     href: "https://www.linkedin.com/in/pruthvi-raj-411992303", 
       username: "Professional Network",
       color: "hover:text-blue-400",
       bg: "hover:bg-blue-500/10"
@@ -22,7 +22,7 @@ function CreatorSection() {
     { 
       icon: Mail, 
       label: "Email", 
-      href: "#", 
+      href: "mailto:luffytaroatp@gmail.com", 
       username: "Academic Inquiry",
       color: "hover:text-emerald-400",
       bg: "hover:bg-emerald-500/10"

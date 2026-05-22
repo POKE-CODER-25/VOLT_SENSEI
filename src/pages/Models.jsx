@@ -11,6 +11,18 @@ import { askVoltSensei } from "../services/groq";
 import { intelligentSearch } from "../services/search";
 import * as THREE from "three";
 
+/**
+ * Utility to generate a stable hash from a string
+ */
+function getStringHash(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
 // --- Components for Highlighting ---
 
 function HighlightWrapper({ active, children, color = "#fbbf24" }) {
@@ -964,15 +976,6 @@ function FunctionSurfaceModel({ highlight }) {
 }
 
 // --- AI Procedural Components (Placeholders) ---
-
-const getStringHash = (str) => {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash) + str.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash);
-};
 
 function AIChemistryPlaceholder({ highlight, name, formula }) {
   const hash = useMemo(() => getStringHash(name || "default"), [name]);
