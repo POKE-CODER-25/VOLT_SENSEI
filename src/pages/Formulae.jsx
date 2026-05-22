@@ -127,21 +127,21 @@ const ALL_ELEMENTS = [
   { n: 54, s: "Xe", name: "Xenon", cat: "noble", b: "p", r: 5, c: 18, v: "0", m: "131.29", conf: "[Kr] 4d¹⁰ 5s² 5p⁶", info: "High-intensity flash lamps." },
   { n: 55, s: "Cs", name: "Cesium", cat: "alkali", b: "s", r: 6, c: 1, v: "1", m: "132.91", conf: "[Xe] 6s¹", info: "Atomic clocks." },
   { n: 56, s: "Ba", name: "Barium", cat: "alkaline", b: "s", r: 6, c: 2, v: "2", m: "137.33", conf: "[Xe] 6s²", info: "X-ray imaging." },
-  { n: 57, s: "La", name: "Lanthanum", cat: "lanthanide", b: "f", r: 9, c: 3, v: "3", m: "138.91", conf: "[Xe] 5d¹ 6s²", info: "Rare earth metal." },
-  { n: 58, s: "Ce", name: "Cerium", cat: "lanthanide", b: "f", r: 9, c: 4, v: "3, 4", m: "140.12", conf: "[Xe] 4f¹ 5d¹ 6s²", info: "Abundant rare earth." },
-  { n: 59, s: "Pr", name: "Praseodymium", cat: "lanthanide", b: "f", r: 9, c: 5, v: "3, 4", m: "140.91", conf: "[Xe] 4f³ 6s²", info: "High-power magnets." },
-  { n: 60, s: "Nd", name: "Neodymium", cat: "lanthanide", b: "f", r: 9, c: 6, v: "3", m: "144.24", conf: "[Xe] 4f⁴ 6s²", info: "Strong permanent magnets." },
-  { n: 61, s: "Pm", name: "Promethium", cat: "lanthanide", b: "f", r: 9, c: 7, v: "3", m: "145", conf: "[Xe] 4f⁵ 6s²", info: "Radioactive rare earth." },
-  { n: 62, s: "Sm", name: "Samarium", cat: "lanthanide", b: "f", r: 9, c: 8, v: "2, 3", m: "150.36", conf: "[Xe] 4f⁶ 6s²", info: "Magnets." },
-  { n: 63, s: "Eu", name: "Europium", cat: "lanthanide", b: "f", r: 9, c: 9, v: "2, 3", m: "151.96", conf: "[Xe] 4f⁷ 6s²", info: "Reactive rare earth." },
-  { n: 64, s: "Gd", name: "Gadolinium", cat: "lanthanide", b: "f", r: 9, c: 10, v: "3", m: "157.25", conf: "[Xe] 4f⁷ 5d¹ 6s²", info: "MRI contrast." },
-  { n: 65, s: "Tb", name: "Terbium", cat: "lanthanide", b: "f", r: 9, c: 11, v: "3, 4", m: "158.93", conf: "[Xe] 4f⁹ 6s²", info: "Lighting." },
-  { n: 66, s: "Dy", name: "Dysprosium", cat: "lanthanide", b: "f", r: 9, c: 12, v: "3", m: "162.50", conf: "[Xe] 4f¹⁰ 6s²", info: "Data storage." },
-  { n: 67, s: "Ho", name: "Holmium", cat: "lanthanide", b: "f", r: 9, c: 13, v: "3", m: "164.93", conf: "[Xe] 4f¹¹ 6s²", info: "High magnetic strength." },
-  { n: 68, s: "Er", name: "Erbium", cat: "lanthanide", b: "f", r: 9, c: 14, v: "3", m: "167.26", conf: "[Xe] 4f¹² 6s²", info: "Fiber optics." },
-  { n: 69, s: "Tm", name: "Thulium", cat: "lanthanide", b: "f", r: 9, c: 15, v: "3", m: "168.93", conf: "[Xe] 4f¹³ 6s²", info: "Portable X-rays." },
-  { n: 70, s: "Yb", name: "Ytterbium", cat: "lanthanide", b: "f", r: 9, c: 16, v: "2, 3", m: "173.05", conf: "[Xe] 4f¹⁴ 6s²", info: "Atomic clocks." },
-  { n: 71, s: "Lu", name: "Lutetium", cat: "lanthanide", b: "f", r: 9, c: 17, v: "3", m: "174.97", conf: "[Xe] 4f¹⁴ 5d¹ 6s²", info: "Dense lanthanide." },
+  { n: 57, s: "La", name: "Lanthanum", cat: "lanthanide", b: "f", r: 8, c: 3, v: "3", m: "138.91", conf: "[Xe] 5d¹ 6s²", info: "Rare earth metal." },
+  { n: 58, s: "Ce", name: "Cerium", cat: "lanthanide", b: "f", r: 8, c: 4, v: "3, 4", m: "140.12", conf: "[Xe] 4f¹ 5d¹ 6s²", info: "Abundant rare earth." },
+  { n: 59, s: "Pr", name: "Praseodymium", cat: "lanthanide", b: "f", r: 8, c: 5, v: "3, 4", m: "140.91", conf: "[Xe] 4f³ 6s²", info: "High-power magnets." },
+  { n: 60, s: "Nd", name: "Neodymium", cat: "lanthanide", b: "f", r: 8, c: 6, v: "3", m: "144.24", conf: "[Xe] 4f⁴ 6s²", info: "Strong permanent magnets." },
+  { n: 61, s: "Pm", name: "Promethium", cat: "lanthanide", b: "f", r: 8, c: 7, v: "3", m: "145", conf: "[Xe] 4f⁵ 6s²", info: "Radioactive rare earth." },
+  { n: 62, s: "Sm", name: "Samarium", cat: "lanthanide", b: "f", r: 8, c: 8, v: "2, 3", m: "150.36", conf: "[Xe] 4f⁶ 6s²", info: "Magnets." },
+  { n: 63, s: "Eu", name: "Europium", cat: "lanthanide", b: "f", r: 8, c: 9, v: "2, 3", m: "151.96", conf: "[Xe] 4f⁷ 6s²", info: "Reactive rare earth." },
+  { n: 64, s: "Gd", name: "Gadolinium", cat: "lanthanide", b: "f", r: 8, c: 10, v: "3", m: "157.25", conf: "[Xe] 4f⁷ 5d¹ 6s²", info: "MRI contrast." },
+  { n: 65, s: "Tb", name: "Terbium", cat: "lanthanide", b: "f", r: 8, c: 11, v: "3, 4", m: "158.93", conf: "[Xe] 4f⁹ 6s²", info: "Lighting." },
+  { n: 66, s: "Dy", name: "Dysprosium", cat: "lanthanide", b: "f", r: 8, c: 12, v: "3", m: "162.50", conf: "[Xe] 4f¹⁰ 6s²", info: "Data storage." },
+  { n: 67, s: "Ho", name: "Holmium", cat: "lanthanide", b: "f", r: 8, c: 13, v: "3", m: "164.93", conf: "[Xe] 4f¹¹ 6s²", info: "High magnetic strength." },
+  { n: 68, s: "Er", name: "Erbium", cat: "lanthanide", b: "f", r: 8, c: 14, v: "3", m: "167.26", conf: "[Xe] 4f¹² 6s²", info: "Fiber optics." },
+  { n: 69, s: "Tm", name: "Thulium", cat: "lanthanide", b: "f", r: 8, c: 15, v: "3", m: "168.93", conf: "[Xe] 4f¹³ 6s²", info: "Portable X-rays." },
+  { n: 70, s: "Yb", name: "Ytterbium", cat: "lanthanide", b: "f", r: 8, c: 16, v: "2, 3", m: "173.05", conf: "[Xe] 4f¹⁴ 6s²", info: "Atomic clocks." },
+  { n: 71, s: "Lu", name: "Lutetium", cat: "lanthanide", b: "f", r: 8, c: 17, v: "3", m: "174.97", conf: "[Xe] 4f¹⁴ 5d¹ 6s²", info: "Dense lanthanide." },
   { n: 72, s: "Hf", name: "Hafnium", cat: "transition", b: "d", r: 6, c: 4, v: "4", m: "178.49", conf: "[Xe] 4f¹⁴ 5d² 6s²", info: "Control rods." },
   { n: 73, s: "Ta", name: "Tantalum", cat: "transition", b: "d", r: 6, c: 5, v: "5", m: "180.95", conf: "[Xe] 4f¹⁴ 5d³ 6s²", info: "Corrosion resistant." },
   { n: 74, s: "W", name: "Tungsten", cat: "transition", b: "d", r: 6, c: 6, v: "6", m: "183.84", conf: "[Xe] 4f¹⁴ 5d⁴ 6s²", info: "Highest melting point." },
@@ -159,21 +159,21 @@ const ALL_ELEMENTS = [
   { n: 86, s: "Rn", name: "Radon", cat: "noble", b: "p", r: 6, c: 18, v: "0", m: "222", conf: "[Xe] 6p⁶", info: "Radioactive gas." },
   { n: 87, s: "Fr", name: "Francium", cat: "alkali", b: "s", r: 7, c: 1, v: "1", m: "223", conf: "[Rn] 7s¹", info: "Extremely rare." },
   { n: 88, s: "Ra", name: "Radium", cat: "alkaline", b: "s", r: 7, c: 2, v: "2", m: "226", conf: "[Rn] 7s²", info: "Luminous paints." },
-  { n: 89, s: "Ac", name: "Actinium", cat: "actinide", b: "f", r: 10, c: 3, v: "3", m: "227", conf: "[Rn] 6d¹ 7s²", info: "Alpha source." },
-  { n: 90, s: "Th", name: "Thorium", cat: "actinide", b: "f", r: 10, c: 4, v: "4", m: "232.04", conf: "[Rn] 6d² 7s²", info: "Nuclear fuel." },
-  { n: 91, s: "Pa", name: "Protactinium", cat: "actinide", b: "f", r: 10, c: 5, v: "4, 5", m: "231.04", conf: "[Rn] 5f² 6d¹ 7s²", info: "Nuclear fuel." },
-  { n: 92, s: "U", name: "Uranium", cat: "actinide", b: "f", r: 10, c: 6, v: "4, 6", m: "238.03", conf: "[Rn] 5f³ 6d¹ 7s²", info: "Nuclear fuel." },
-  { n: 93, s: "Np", name: "Neptunium", cat: "actinide", b: "f", r: 10, c: 7, v: "3-6", m: "237", conf: "[Rn] 5f⁴ 6d¹ 7s²", info: "Transuranic." },
-  { n: 94, s: "Pu", name: "Plutonium", cat: "actinide", b: "f", r: 10, c: 8, v: "3-6", m: "244", conf: "[Rn] 5f⁶ 7s²", info: "Weapons." },
-  { n: 95, s: "Am", name: "Americium", cat: "actinide", b: "f", r: 10, c: 9, v: "3-6", m: "243", conf: "[Rn] 5f⁷ 7s²", info: "Smoke detectors." },
-  { n: 96, s: "Cm", name: "Curium", cat: "actinide", b: "f", r: 10, c: 10, v: "3", m: "247", conf: "[Rn] 5f⁷ 6d¹ 7s²", info: "Space probes." },
-  { n: 97, s: "Bk", name: "Berkelium", cat: "actinide", b: "f", r: 10, c: 11, v: "3, 4", m: "247", conf: "[Rn] 5f⁹ 7s²", info: "UC Berkeley." },
-  { n: 98, s: "Cf", name: "Californium", cat: "actinide", b: "f", r: 10, c: 12, v: "2-4", m: "251", conf: "[Rn] 5f¹⁰ 7s²", info: "Neutron emitter." },
-  { n: 99, s: "Es", name: "Einsteinium", cat: "actinide", b: "f", r: 10, c: 13, v: "2, 3", m: "252", conf: "[Rn] 5f¹¹ 7s²", info: "H-bomb debris." },
-  { n: 100, s: "Fm", name: "Fermium", cat: "actinide", b: "f", r: 10, c: 14, v: "2, 3", m: "257", conf: "[Rn] 5f¹² 7s²", info: "Neutron capture." },
-  { n: 101, s: "Md", name: "Mendelevium", cat: "actinide", b: "f", r: 10, c: 15, v: "2, 3", m: "258", conf: "[Rn] 5f¹³ 7s²", info: "Dmitri Mendeleev." },
-  { n: 102, s: "No", name: "Nobelium", cat: "actinide", b: "f", r: 10, c: 16, v: "2, 3", m: "259", conf: "[Rn] 5f¹⁴ 7s²", info: "Alfred Nobel." },
-  { n: 103, s: "Lr", name: "Lawrencium", cat: "actinide", b: "f", r: 10, c: 17, v: "3", m: "266", conf: "[Rn] 5f¹⁴ 7s² 7p¹", info: "Ernest Lawrence." },
+  { n: 89, s: "Ac", name: "Actinium", cat: "actinide", b: "f", r: 9, c: 3, v: "3", m: "227", conf: "[Rn] 6d¹ 7s²", info: "Alpha source." },
+  { n: 90, s: "Th", name: "Thorium", cat: "actinide", b: "f", r: 9, c: 4, v: "4", m: "232.04", conf: "[Rn] 6d² 7s²", info: "Nuclear fuel." },
+  { n: 91, s: "Pa", name: "Protactinium", cat: "actinide", b: "f", r: 9, c: 5, v: "4, 5", m: "231.04", conf: "[Rn] 5f² 6d¹ 7s²", info: "Nuclear fuel." },
+  { n: 92, s: "U", name: "Uranium", cat: "actinide", b: "f", r: 9, c: 6, v: "4, 6", m: "238.03", conf: "[Rn] 5f³ 6d¹ 7s²", info: "Nuclear fuel." },
+  { n: 93, s: "Np", name: "Neptunium", cat: "actinide", b: "f", r: 9, c: 7, v: "3-6", m: "237", conf: "[Rn] 5f⁴ 6d¹ 7s²", info: "Transuranic." },
+  { n: 94, s: "Pu", name: "Plutonium", cat: "actinide", b: "f", r: 9, c: 8, v: "3-6", m: "244", conf: "[Rn] 5f⁶ 7s²", info: "Weapons." },
+  { n: 95, s: "Am", name: "Americium", cat: "actinide", b: "f", r: 9, c: 9, v: "3-6", m: "243", conf: "[Rn] 5f⁷ 7s²", info: "Smoke detectors." },
+  { n: 96, s: "Cm", name: "Curium", cat: "actinide", b: "f", r: 9, c: 10, v: "3", m: "247", conf: "[Rn] 5f⁷ 6d¹ 7s²", info: "Space probes." },
+  { n: 97, s: "Bk", name: "Berkelium", cat: "actinide", b: "f", r: 9, c: 11, v: "3, 4", m: "247", conf: "[Rn] 5f⁹ 7s²", info: "UC Berkeley." },
+  { n: 98, s: "Cf", name: "Californium", cat: "actinide", b: "f", r: 9, c: 12, v: "2-4", m: "251", conf: "[Rn] 5f¹⁰ 7s²", info: "Neutron emitter." },
+  { n: 99, s: "Es", name: "Einsteinium", cat: "actinide", b: "f", r: 9, c: 13, v: "2, 3", m: "252", conf: "[Rn] 5f¹¹ 7s²", info: "H-bomb debris." },
+  { n: 100, s: "Fm", name: "Fermium", cat: "actinide", b: "f", r: 9, c: 14, v: "2, 3", m: "257", conf: "[Rn] 5f¹² 7s²", info: "Neutron capture." },
+  { n: 101, s: "Md", name: "Mendelevium", cat: "actinide", b: "f", r: 9, c: 15, v: "2, 3", m: "258", conf: "[Rn] 5f¹³ 7s²", info: "Dmitri Mendeleev." },
+  { n: 102, s: "No", name: "Nobelium", cat: "actinide", b: "f", r: 9, c: 16, v: "2, 3", m: "259", conf: "[Rn] 5f¹⁴ 7s²", info: "Alfred Nobel." },
+  { n: 103, s: "Lr", name: "Lawrencium", cat: "actinide", b: "f", r: 9, c: 17, v: "3", m: "266", conf: "[Rn] 5f¹⁴ 7s² 7p¹", info: "Ernest Lawrence." },
   { n: 104, s: "Rf", name: "Rutherfordium", cat: "transition", b: "d", r: 7, c: 4, v: "4", m: "267", conf: "[Rn] 6d² 7s²", info: "Synthetic." },
   { n: 105, s: "Db", name: "Dubnium", cat: "transition", b: "d", r: 7, c: 5, v: "5", m: "268", conf: "[Rn] 6d³ 7s²", info: "Synthetic." },
   { n: 106, s: "Sg", name: "Seaborgium", cat: "transition", b: "d", r: 7, c: 6, v: "6", m: "269", conf: "[Rn] 6d⁴ 7s²", info: "Synthetic." },
@@ -193,8 +193,28 @@ const ALL_ELEMENTS = [
 
 function PeriodicTable({ onSelect, selectedId }) {
   return (
-    <div className="mb-12 -mx-4 md:mx-0 overflow-x-auto custom-scrollbar pb-6 px-4 scroll-smooth">
-      <div className="inline-grid grid-cols-[repeat(18,minmax(42px,1fr))] md:grid-cols-[repeat(18,minmax(55px,1fr))] gap-1 p-5 bg-slate-900/40 rounded-[2.5rem] border border-white/10 backdrop-blur-3xl shadow-[0_0_50px_rgba(0,0,0,0.3)] min-w-max">
+    <div className="mb-12 -mx-4 md:mx-0 overflow-x-auto custom-scrollbar pb-6 px-4 scroll-smooth flex justify-center">
+      <div className="mx-auto inline-grid grid-cols-[repeat(18,40px)] md:grid-cols-[repeat(18,52px)] gap-1 p-2 md:p-3 pt-1 bg-slate-900/40 rounded-[2rem] border border-white/10 backdrop-blur-3xl shadow-[0_0_50px_rgba(0,0,0,0.3)] min-w-max">
+        {/* Legend in the 'Hole' (Rows 1-3, Columns 4-12) */}
+        <div style={{ gridColumn: '4 / 13', gridRow: '1 / 4' }} className="flex flex-col items-center justify-center p-2 self-center">
+           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 max-w-[400px]">
+              {Object.entries(ELEMENT_CATEGORIES).map(([key, cat]) => (
+                <div key={key} className="flex items-center gap-1.5 group cursor-default">
+                   <div className={`h-1.5 w-1.5 rounded-full ${cat.color} group-hover:scale-125 transition-transform`} />
+                   <span className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-slate-500 group-hover:text-white transition-colors">{cat.name}</span>
+                </div>
+              ))}
+           </div>
+           <div className="mt-4 flex items-center gap-6 px-4 py-1.5 bg-white/[0.03] rounded-lg border border-white/5">
+              <span className="text-[7px] font-black text-slate-600 uppercase tracking-widest">Blocks</span>
+              <div className="flex items-center gap-4">
+                {['s', 'p', 'd', 'f'].map(block => (
+                  <span key={block} className="text-[8px] font-black text-slate-400 uppercase tracking-widest hover:text-white transition-colors cursor-default">{block}</span>
+                ))}
+              </div>
+           </div>
+        </div>
+
         {ALL_ELEMENTS.map((el) => {
           const category = ELEMENT_CATEGORIES[el.cat] || ELEMENT_CATEGORIES.transition;
           const isSelected = selectedId === el.n;
@@ -202,69 +222,38 @@ function PeriodicTable({ onSelect, selectedId }) {
           return (
             <motion.button
               key={el.n}
-              whileHover={{ scale: 1.3, zIndex: 50 }}
+              whileHover={{ scale: 1.25, zIndex: 50 }}
               whileTap={{ scale: 0.9 }}
               onClick={() => onSelect(el)}
               style={{ gridColumn: el.c, gridRow: el.r }}
-              className={`relative flex flex-col items-center justify-center aspect-square rounded-lg border transition-all duration-300 ${
+              className={`relative flex flex-col items-center justify-center h-[40px] md:h-[52px] rounded-md border transition-all duration-300 ${
                 isSelected
                   ? `${category.border} ${category.color.replace('bg-', 'bg-opacity-20 ')} ring-1 ring-white/20 shadow-[0_0_15px_rgba(255,255,255,0.05)]`
                   : `border-white/5 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.05]`
               }`}
             >
-              <span className="absolute top-0.5 left-1 text-[7px] font-black text-slate-500">{el.n}</span>
-              <span className={`text-base md:text-lg font-black ${isSelected ? 'text-white' : 'text-slate-200 group-hover:text-white'}`}>
+              <span className="absolute top-0.5 left-1 text-[6px] md:text-[7px] font-black text-slate-500">{el.n}</span>
+              <span className={`text-sm md:text-base font-black ${isSelected ? 'text-white' : 'text-slate-200 group-hover:text-white'}`}>
                 {el.s}
               </span>
-              <span className="text-[5px] md:text-[6px] font-black text-slate-500 uppercase tracking-tight truncate w-full px-1 text-center leading-none">
+              <span className="hidden md:block text-[5px] font-black text-slate-500 uppercase tracking-tight truncate w-full px-1 text-center leading-none mt-0.5">
                 {el.name}
               </span>
               
               {/* Category Indicator Line */}
-              <div className={`absolute bottom-1 w-6 h-0.5 rounded-full ${category.color} ${isSelected ? 'opacity-100 shadow-[0_0_8px_currentColor]' : 'opacity-40'}`} />
+              <div className={`absolute bottom-0.5 w-5 md:w-6 h-0.5 rounded-full ${category.color} ${isSelected ? 'opacity-100 shadow-[0_0_8px_currentColor]' : 'opacity-40'}`} />
 
               {/* Selected Glow Halo */}
               {isSelected && (
                 <motion.div 
                   layoutId="halo"
-                  className={`absolute -inset-1 rounded-[0.7rem] border-2 ${category.border} opacity-40 blur-[1px]`}
+                  className={`absolute -inset-1 rounded-lg border-2 ${category.border} opacity-40 blur-[1px]`}
                   initial={false}
                 />
               )}
             </motion.button>
           );
         })}
-        
-        {/* Category Legend */}
-        <div className="col-span-18 mt-10 pt-8 border-t border-white/5">
-           <div className="flex flex-col items-center gap-8">
-             {/* Category Row */}
-             <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 max-w-5xl">
-                {Object.entries(ELEMENT_CATEGORIES).map(([key, cat]) => (
-                  <div key={key} className="flex items-center gap-2.5 group cursor-default">
-                     <div className={`h-2.5 w-2.5 rounded-full ${cat.color} shadow-[0_0_10px_rgba(0,0,0,0.5)] group-hover:scale-125 transition-transform duration-500`} />
-                     <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 group-hover:text-white transition-colors duration-300">{cat.name}</span>
-                  </div>
-                ))}
-             </div>
-             
-             {/* Block Row */}
-             <div className="flex items-center gap-8 px-8 py-3 bg-white/[0.02] rounded-2xl border border-white/5 backdrop-blur-xl">
-                <span className="text-[9px] font-black text-slate-600 uppercase tracking-[0.25em]">Blocks</span>
-                <div className="h-6 w-px bg-white/10" />
-                <div className="flex items-center gap-6">
-                  {['s', 'p', 'd', 'f'].map(block => (
-                    <div key={block} className="flex items-center gap-2 group cursor-default">
-                       <div className="h-6 w-6 rounded-lg border border-white/10 flex items-center justify-center text-[10px] font-black text-white bg-slate-900 group-hover:bg-slate-800 group-hover:border-white/30 transition-all duration-300">
-                         {block.toUpperCase()}
-                       </div>
-                       <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 group-hover:text-white transition-colors duration-300">{block}</span>
-                    </div>
-                  ))}
-                </div>
-             </div>
-           </div>
-        </div>
       </div>
     </div>
   );
